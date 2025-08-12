@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
+import Script from 'next/script' // 1. Import the Script component
 
 export const metadata: Metadata = {
   title: 'v0 App',
@@ -25,7 +26,15 @@ html {
 }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        
+        {/* 2. Add the Adobe script here */}
+        <Script 
+          src="https://documentcloud.adobe.com/view-sdk/main.js" 
+          strategy="lazyOnload" 
+        />
+      </body>
     </html>
   )
 }

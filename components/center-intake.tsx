@@ -1,18 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { useEffect } from "react" // Import useEffect
+import { useEffect, useRef } from "react" // Import useEffect and useRef
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Settings, UploadCloud } from "lucide-react"
+import { UploadCloud, Loader2 } from "lucide-react"
 
-// Update props to include pdfUrl
 export function CenterIntake({
   title = "Untitled notebook",
   hasSources = false,
-  pdfUrl, // New prop for PDF URL
+  pdfUrl,
   persona = "",
   job = "",
   onPersonaChange = () => {},
@@ -28,77 +27,108 @@ export function CenterIntake({
   onJobChange?: (v: string) => void
   onOpenAdd?: () => void
 }) {
+  const viewerRef = useRef<HTMLDivElement | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  // useEffect hook to handle the Adobe DC View SDK logic
   useEffect(() => {
-    // Only run if we have a PDF URL
-    if (pdfUrl) {
-      // Check if the Adobe DC View SDK script is loaded
-      if (typeof (window as any).AdobeDC !== 'undefined') {
-        // Get the Adobe DC View SDK instance
-        const adobeDCView = new (window as any).AdobeDC.View({
-          clientId: "c00e026f37cc451aae1ee54adde2fca8" // Replace with your client ID
-        });
-        // Embed the PDF
-        adobeDCView.previewFile(
-          {
-            content: {
-              location: {
-                url: pdfUrl
-              }
-            },
-            metaData: {
-              fileName: title
-            }
-          },
-          {
-            embedMode: "SIZED_CONTAINER",
-            defaultViewMode: "FIT_WIDTH"
-          }
-        );
-      } else {
-        console.error("Adobe DC View SDK is not loaded.");
+    // Function to render the PDF
+    const renderPdf = () => {
+      if (typeof (window as any).AdobeDC === 'undefined') {
+        console.warn("Adobe DC View SDK not ready.");
+        return;
       }
+      setIsLoading(false);
+
+      const adobeDCView = new (window as any).AdobeDC.View({
+        clientId: "c00e026f37cc451aae1ee54adde2fca8", // Your Client ID
+        divId: "adobe-dc-view",
+      });
+
+      adobeDCView.previewFile(
+        {
+          content: { location: { url: pdfUrl! } },
+          metaData: { fileName: title },
+        },
+        {
+          embedMode: "SIZED_CONTAINER",
+          defaultViewMode: "FIT_WIDTH",
+          showFullScreen: true,
+          showDownloadPDF: true,
+        }
+      );
+    };
+
+    // Only attempt to render if we have a URL and a container
+    if (pdfUrl && viewerRef.current) {
+      setIsLoading(true);
+      // The SDK script might take a moment to load. We listen for the event.
+      document.addEventListener("adobe_dc_view_sdk.ready", renderPdf);
+
+      // If the SDK is already loaded, render immediately
+      if (typeof (window as any).AdobeDC !== 'undefined') {
+        renderPdf();
+      }
+    } else {
+      setIsLoading(false);
     }
+
+    // Cleanup function to remove the event listener
+    return () => {
+      document.removeEventListener("adobe_dc_view_sdk.ready", renderPdf);
+    };
   }, [pdfUrl, title]);
 
   return (
     <Card className="flex h-full flex-col border-white/10 bg-[rgb(27,29,31)]">
-      {/* Thin header line to match app chrome */}
+      {/* Header */}
       <div className="border-b border-white/10 px-4 py-2">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-neutral-200">{title}</div>
-        </div>
+        <div className="text-sm font-medium text-neutral-200">{title}</div>
       </div>
 
-      {/* Center empty-state CTA when no sources */}
-      {!hasSources && (
-        <div className="relative flex flex-1 items-center justify-center px-6">
-          <div className="text-center">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/8">
-              <UploadCloud className="h-5 w-5 text-neutral-300" />
-            </div>
-            <div className="mt-4 text-lg font-medium text-neutral-200">Add a source to get started</div>
-            <div className="mt-2">
-              <Button
-                onClick={onOpenAdd}
-                variant="secondary"
-                className="rounded-full border-white/15 bg-white/5 px-4 py-2 text-[13px] text-neutral-200 hover:bg-white/10"
-              >
-                Upload a source
-              </Button>
-            </div>
+      {/* Main Content Area */}
+      <div className="flex-1 relative">
+        {!pdfUrl ? (
+          // Empty state when no PDF is selected
+          <div className="absolute inset-0 flex items-center justify-center text-center px-6">
+            {!hasSources ? (
+              // CTA to add sources if none exist
+              <div>
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/8">
+                  <UploadCloud className="h-5 w-5 text-neutral-300" />
+                </div>
+                <div className="mt-4 text-lg font-medium text-neutral-200">Add a source to get started</div>
+                <div className="mt-2">
+                  <Button
+                    onClick={onOpenAdd}
+                    variant="secondary"
+                    className="rounded-full border-white/15 bg-white/5 px-4 py-2 text-[13px] text-neutral-200 hover:bg-white/10"
+                  >
+                    Upload a source
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              // Prompt to select a source if sources exist
+              <div className="text-lg font-medium text-neutral-400">
+                Select a document from the left panel to view it.
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        ) : (
+          // PDF Viewer and Loading state
+          <>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
+                <Loader2 className="h-8 w-8 animate-spin text-sky-400" />
+              </div>
+            )}
+            <div id="adobe-dc-view" ref={viewerRef} className="h-full w-full" />
+          </>
+        )}
+      </div>
 
-      {/* PDF Viewer container when sources exist */}
-      {hasSources && (
-        <div id="adobe-dc-view" className="flex-1 overflow-y-auto" />
-      )}
-
-      {/* Persona + JTBD inputs */}
-      <div className="grid w-full gap-3 px-4 py-4 md:grid-cols-2">
+      {/* Persona + Job Inputs */}
+      <div className="grid w-full gap-3 px-4 py-4 md:grid-cols-2 border-t border-white/10">
         <div className="grid gap-1.5">
           <Label htmlFor="persona" className="text-xs text-neutral-300">
             Persona
@@ -124,9 +154,6 @@ export function CenterIntake({
           />
         </div>
       </div>
-
-      {/* Load the Adobe DC View SDK script */}
-      <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
     </Card>
   )
 }
