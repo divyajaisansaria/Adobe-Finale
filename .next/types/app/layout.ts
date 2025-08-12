@@ -1,4 +1,4 @@
-// File: /Users/divyajaisansaria/Desktop/Projects/Adobe hackathon round 3/Adobe-Finale/app/layout.tsx
+// File: /Users/shashank/Downloads/adobe dummy website/Adobe-Finale/app/layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -7,7 +7,7 @@
 # production
 /build
 /dist
-
+/.next/
 # miscellaneous
 .DS_Store
 .env

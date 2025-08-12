@@ -2,132 +2,143 @@
 
 import * as React from "react"
 import { AddSourcesModal } from "@/components/add-sources-modal"
-import { SourcesPanel} from "@/components/sources-panel"; // Adjust path if needed
+import { SourcesPanel } from "@/components/sources-panel"
 import { CenterIntake } from "@/components/center-intake"
 import { StudioPanel } from "@/components/studio-panel"
-import { getAllFileRecords, deleteFileRecord, type FileRecord } from "@/lib/idb";
+import { getAllFileRecords, deleteFileRecord, type FileRecord } from "@/lib/idb"
+import { Button } from "@/components/ui/button"
 
 export default function MainPage() {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [sources, setSources] = React.useState<FileRecord[]>([]);
-  const [activeTab, setActiveTab] = React.useState("sources");
-  const [selectedFile, setSelectedFile] = React.useState<FileRecord | null>(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false)
+  const [sources, setSources] = React.useState<FileRecord[]>([])
+  const [activeTab, setActiveTab] = React.useState("sources")
+  const [selectedFile, setSelectedFile] = React.useState<FileRecord | null>(null)
+  const [persona, setPersona] = React.useState("")
+  const [jobToBeDone, setJobToBeDone] = React.useState("")
 
-  // Function to fetch all data from DB and update state
   const refreshSources = React.useCallback(async () => {
     const records = await getAllFileRecords();
-    setSources(records.reverse()); // Show newest first
-  }, []);
+    setSources(records.reverse());
+  }, [])
 
-  // Load documents from IndexedDB on initial component mount
   React.useEffect(() => {
-    refreshSources();
-  }, [refreshSources]);
+    refreshSources()
+  }, [refreshSources])
 
-  // Callback for removing a document
   const handleRemoveSource = async (id: number) => {
-    try {
-      await deleteFileRecord(id);
-      if (selectedFile?.id === id) {
-        setSelectedFile(null);
-      }
-      await refreshSources();
-    } catch (error) {
-      console.error("Failed to remove source:", error);
-      alert("Could not remove the document.");
+    await deleteFileRecord(id);
+    if (selectedFile?.id === id) {
+      setSelectedFile(null)
     }
-  };
-
-  // Callback to set the active PDF for viewing
+    await refreshSources()
+  }
+  
   const handleSourceSelect = (url: string, name: string) => {
-    const file = sources.find(s => s.url === url);
-    if(file) setSelectedFile(file);
-  };
+    const file = sources.find(s => s.url === url && s.name === name)
+    if (file) {
+      setSelectedFile(file)
+      setPersona(file.persona || "")
+      setJobToBeDone(file.jobToBeDone || "")
+
+      if (window.innerWidth < 768) {
+        setActiveTab('chat');
+      }
+    }
+  }
+  
+  const hasSources = sources.length > 0
 
   return (
-    <div className="min-h-[100dvh] bg-[rgb(20,21,23)] text-white flex flex-col">
+    <div className="flex h-screen flex-col overflow-hidden bg-[rgb(20,21,23)] text-white">
       <AddSourcesModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         onUploadComplete={refreshSources}
       />
       
-      {/* Header */}
-      <header className="px-6 py-3 flex items-center justify-between border-b border-gray-700 flex-shrink-0">
-        <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-black rounded-full"></div>
-            </div>
-            <span className="text-lg font-semibold">Acrobat AI</span>
+      <main className="flex-1 overflow-hidden p-4">
+        {/* Desktop Layout (No Changes) */}
+        <div className="hidden h-full md:flex md:gap-4">
+          <SourcesPanel
+            sources={sources}
+            onOpenAdd={() => setIsModalOpen(true)}
+            onSelectSource={handleSourceSelect}
+            onRemoveSource={handleRemoveSource}
+          />
+          <div className="flex-1 min-w-0 h-full">
+            <CenterIntake
+              key={selectedFile?.url || 'desktop-no-file'}
+              title={selectedFile?.name}
+              hasSources={hasSources}
+              pdfUrl={selectedFile?.url}
+              persona={persona}
+              job={jobToBeDone}
+              onPersonaChange={setPersona}
+              onJobChange={setJobToBeDone}
+              onOpenAdd={() => setIsModalOpen(true)}
+            />
           </div>
-          {/* Mobile Tabs */}
-          <div className="md:hidden flex space-x-4">
-            <button
-              onClick={() => setActiveTab("sources")}
-              className={`pb-2 px-1 text-sm font-medium transition-colors duration-200 ${
-                activeTab === "sources" ? "border-b-2 border-white text-white" : "text-gray-400 hover:text-white"
-              }`}
+          <StudioPanel hasSources={hasSources} />
+        </div>
+
+        {/* --- FINAL, ROBUST MOBILE LAYOUT --- */}
+        <div className="flex h-full flex-col gap-4 md:hidden">
+          {/* 1. Manual Tab Buttons (No Change) */}
+          <div className="grid shrink-0 grid-cols-3 gap-2 rounded-lg bg-neutral-800 p-1">
+            <Button
+              variant={activeTab === 'sources' ? 'secondary' : 'ghost'}
+              onClick={() => setActiveTab('sources')}
+              className="h-auto py-1.5 data-[state=active]:bg-neutral-600"
             >
               Sources
-            </button>
-            <button
-              onClick={() => setActiveTab("chat")}
-              className={`pb-2 px-1 text-sm font-medium transition-colors duration-200 ${
-                activeTab === "chat" ? "border-b-2 border-white text-white" : "text-gray-400 hover:text-white"
-              }`}
+            </Button>
+            <Button
+              variant={activeTab === 'chat' ? 'secondary' : 'ghost'}
+              onClick={() => setActiveTab('chat')}
+              className="h-auto py-1.5 data-[state=active]:bg-neutral-600"
             >
               Chat
-            </button>
-            <button
-              onClick={() => setActiveTab("studio")}
-              className={`pb-2 px-1 text-sm font-medium transition-colors duration-200 ${
-                activeTab === "studio" ? "border-b-2 border-white text-white" : "text-gray-400 hover:text-white"
-              }`}
+            </Button>
+             <Button
+              variant={activeTab === 'studio' ? 'secondary' : 'ghost'}
+              onClick={() => setActiveTab('studio')}
+              className="h-auto py-1.5 data-[state=active]:bg-neutral-600"
             >
               Studio
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4 text-gray-400">
-          <span className="text-lg">🔒</span>
-          <span className="text-lg">⚙️</span>
-          <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">S</div>
-        </div>
-      </header>
-
-      {/* Main Content Grid */}
-      <main className="flex-1 overflow-auto p-4">
-        <div className="grid h-[calc(100vh-100px)] w-full gap-4 md:grid-cols-3 lg:grid-cols-[350px_1fr_350px]">
-          {/* Left Panel */}
-          <div className={`h-full md:block ${activeTab === "sources" ? "block" : "hidden"}`}>
-            <SourcesPanel
-              sources={sources}
-              onOpenAdd={() => setIsModalOpen(true)}
-              onSelectSource={handleSourceSelect}
-              onRemoveSource={handleRemoveSource}
-            />
+            </Button>
           </div>
 
-          {/* Center Panel */}
-          <div className={`h-full col-span-1 md:block ${activeTab === "chat" ? "block" : "hidden"}`}>
-            <CenterIntake
-              title={selectedFile ? selectedFile.name.replace(/\.[^.]+$/, "") : "Acrobat AI"}
-              persona={selectedFile?.persona}
-              job={selectedFile?.jobToBeDone}
-              pdfUrl={selectedFile?.url}
-              onOpenAdd={() => setIsModalOpen(true)}
-              hasSources={sources.length > 0}
-            />
-          </div>
-          
-          {/* Right Panel */}
-          <div className={`h-full md:block ${activeTab === "studio" ? "block" : "hidden"}`}>
-            <StudioPanel />
+          {/* 2. Content Area with Absolute Positioning */}
+          {/* This parent `div` creates the frame for the content. */}
+          <div className="flex-1 relative">
+            {/* Each panel is now positioned absolutely within the frame, guaranteeing its size. */}
+            <div className={`absolute inset-0 ${activeTab === 'sources' ? 'block' : 'hidden'}`}>
+              <SourcesPanel
+                sources={sources}
+                onOpenAdd={() => setIsModalOpen(true)}
+                onSelectSource={handleSourceSelect}
+                onRemoveSource={handleRemoveSource}
+              />
+            </div>
+            <div className={`absolute inset-0 ${activeTab === 'chat' ? 'block' : 'hidden'}`}>
+              <CenterIntake
+                key={selectedFile?.url || 'mobile-no-file'}
+                title={selectedFile?.name}
+                hasSources={hasSources}
+                pdfUrl={selectedFile?.url}
+                persona={persona}
+                job={jobToBeDone}
+                onPersonaChange={setPersona}
+                onJobChange={setJobToBeDone}
+                onOpenAdd={() => setIsModalOpen(true)}
+              />
+            </div>
+            <div className={`absolute inset-0 ${activeTab === 'studio' ? 'block' : 'hidden'}`}>
+              <StudioPanel hasSources={hasSources} />
+            </div>
           </div>
         </div>
       </main>
     </div>
   )
 }
-

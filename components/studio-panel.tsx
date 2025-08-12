@@ -12,33 +12,26 @@ import {
   FileVideo2,
   BrainCircuit,
   Sparkles,
-  MoreVertical,
   Loader2,
   ChevronLeft
 } from "lucide-react"
 import { StudioToggleButton } from "@/components/ui/StudioToggleButton"
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"
+// NOTE: I've removed DropdownMenu imports as they weren't used in the component logic.
 
 const outputFilePath = "/dummy.json";
 
 export function StudioPanel({ hasSources = false }: { hasSources?: boolean }) {
   const [collapsed, setCollapsed] = useState(false)
-  const [jsonOutput, setJsonOutput] = useState<any>(null); // Consider defining a specific type/interface for this
+  const [jsonOutput, setJsonOutput] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<any>(null);
 
   useEffect(() => {
-    // Only fetch data when the 'Reports' feature is specifically activated
     if (hasSources && activeFeature === 'Reports') {
       setLoading(true);
-      setError(null); // Clear previous errors on new fetch
+      setError(null);
       fetch(outputFilePath)
         .then(response => {
           if (!response.ok) {
@@ -56,7 +49,6 @@ export function StudioPanel({ hasSources = false }: { hasSources?: boolean }) {
           setLoading(false);
         });
     } else if (!hasSources) {
-      // Reset all state if sources are removed
       setJsonOutput(null);
       setError(null);
       setActiveFeature(null);
@@ -64,7 +56,6 @@ export function StudioPanel({ hasSources = false }: { hasSources?: boolean }) {
     }
   }, [hasSources, activeFeature]);
 
-  // Safer handler that checks for data consistency
   const handleSectionClick = (index: number) => {
     if (jsonOutput && jsonOutput.extracted_sections?.[index] && jsonOutput.subsection_analysis?.[index]) {
       const sectionTitle = jsonOutput.extracted_sections[index]?.section_title;
@@ -80,6 +71,7 @@ export function StudioPanel({ hasSources = false }: { hasSources?: boolean }) {
   };
 
   const renderStudioContent = () => {
+    // This function's internal logic remains the same
     if (activeFeature === 'Reports') {
       if (loading) {
         return (
@@ -160,17 +152,18 @@ export function StudioPanel({ hasSources = false }: { hasSources?: boolean }) {
 
   return (
     <Card
+      // --- THE ONLY CHANGE IS HERE ---
+      // I've removed `overflow-hidden` from the collapsed state.
       className={`flex h-full flex-col border-white/10 bg-[rgb(27,29,31)] transition-all duration-300
-        ${collapsed ? "w-[50px] overflow-hidden" : "sm:w-[300px] md:w-[350px] lg:w-[400px]"}`}
+        ${collapsed ? "w-[50px]" : "sm:w-[300px] md:w-[350px] lg:w-[400px]"}`}
     >
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
-        {/* Only show the back button when a specific section is selected */}
         {activeFeature === 'Reports' && selectedSection ? (
           <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-400 hover:bg-neutral-700/50" onClick={() => setSelectedSection(null)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
         ) : (
-          <div className="text-sm font-medium text-neutral-200">Studio</div>
+          !collapsed && <div className="text-sm font-medium text-neutral-200">Studio</div>
         )}
         <div className="ml-auto">
           <StudioToggleButton

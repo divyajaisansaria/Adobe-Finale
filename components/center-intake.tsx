@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useEffect, useRef } from "react" // Import useEffect and useRef
+import { useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,67 +31,60 @@ export function CenterIntake({
   const [isLoading, setIsLoading] = React.useState(true);
 
   useEffect(() => {
-    // Function to render the PDF
-    const renderPdf = () => {
-      if (typeof (window as any).AdobeDC === 'undefined') {
-        console.warn("Adobe DC View SDK not ready.");
-        return;
-      }
-      setIsLoading(false);
-
-      const adobeDCView = new (window as any).AdobeDC.View({
-        clientId: "c00e026f37cc451aae1ee54adde2fca8", // Your Client ID
-        divId: "adobe-dc-view",
-      });
-
-      adobeDCView.previewFile(
-        {
-          content: { location: { url: pdfUrl! } },
-          metaData: { fileName: title },
-        },
-        {
-          embedMode: "SIZED_CONTAINER",
-          defaultViewMode: "FIT_WIDTH",
-          showFullScreen: true,
-          showDownloadPDF: true,
+    const container = viewerRef.current;
+    if (pdfUrl && container) {
+      const renderPdf = () => {
+        if (typeof (window as any).AdobeDC === 'undefined') {
+          console.warn("Adobe DC View SDK not ready.");
+          return;
         }
-      );
-    };
 
-    // Only attempt to render if we have a URL and a container
-    if (pdfUrl && viewerRef.current) {
-      setIsLoading(true);
-      // The SDK script might take a moment to load. We listen for the event.
+        const adobeDCView = new (window as any).AdobeDC.View({
+          clientId: "c00e026f37cc451aae1ee54adde2fca8", // Your Client ID
+          divId: container.id,
+        });
+
+        adobeDCView.previewFile(
+          {
+            content: { location: { url: pdfUrl } },
+            metaData: { fileName: title },
+          },
+          {
+            embedMode: "SIZED_CONTAINER",
+            defaultViewMode: "FIT_WIDTH",
+            showFullScreen: true,
+            showDownloadPDF: true,
+          }
+        );
+        setIsLoading(false);
+      };
+
       document.addEventListener("adobe_dc_view_sdk.ready", renderPdf);
-
-      // If the SDK is already loaded, render immediately
       if (typeof (window as any).AdobeDC !== 'undefined') {
         renderPdf();
       }
+
+      return () => {
+        document.removeEventListener("adobe_dc_view_sdk.ready", renderPdf);
+      };
     } else {
       setIsLoading(false);
     }
-
-    // Cleanup function to remove the event listener
-    return () => {
-      document.removeEventListener("adobe_dc_view_sdk.ready", renderPdf);
-    };
   }, [pdfUrl, title]);
 
   return (
     <Card className="flex h-full flex-col border-white/10 bg-[rgb(27,29,31)]">
-      {/* Header */}
       <div className="border-b border-white/10 px-4 py-2">
         <div className="text-sm font-medium text-neutral-200">{title}</div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 relative">
+      {/* --- THE FIX IS HERE --- */}
+      {/* Adding `overflow-hidden` allows the `flex-1` container to correctly calculate its height,
+          which in turn allows the `h-full` PDF viewer inside it to expand properly. */}
+      <div className="flex-1 relative overflow-hidden">
         {!pdfUrl ? (
-          // Empty state when no PDF is selected
           <div className="absolute inset-0 flex items-center justify-center text-center px-6">
             {!hasSources ? (
-              // CTA to add sources if none exist
               <div>
                 <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/8">
                   <UploadCloud className="h-5 w-5 text-neutral-300" />
@@ -108,14 +101,12 @@ export function CenterIntake({
                 </div>
               </div>
             ) : (
-              // Prompt to select a source if sources exist
               <div className="text-lg font-medium text-neutral-400">
                 Select a document from the left panel to view it.
               </div>
             )}
           </div>
         ) : (
-          // PDF Viewer and Loading state
           <>
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
@@ -127,7 +118,6 @@ export function CenterIntake({
         )}
       </div>
 
-      {/* Persona + Job Inputs */}
       <div className="grid w-full gap-3 px-4 py-4 md:grid-cols-2 border-t border-white/10">
         <div className="grid gap-1.5">
           <Label htmlFor="persona" className="text-xs text-neutral-300">
