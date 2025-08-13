@@ -121,3 +121,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* --- THIS IS THE FIX --- */
+/* By placing the rule inside @layer components, we ensure it's processed correctly by Tailwind */
+@layer components {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined' !important;
+  }
+}

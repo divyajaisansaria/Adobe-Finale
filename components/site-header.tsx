@@ -3,16 +3,16 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { NotebookPen } from "lucide-react"
-
+import MainIcon from "@/assets/icons/Icon.svg"
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2" aria-label="Home">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border">
-            <NotebookPen className="h-4 w-4" />
+            <MainIcon></MainIcon>
           </span>
-          <span className="text-sm font-semibold">DocMind</span>
+          <span className="text-sm font-semibold">Acrobate</span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
