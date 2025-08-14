@@ -11,3 +11,4 @@
 # miscellaneous
 .DS_Store
 .env
+/venv
