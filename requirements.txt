@@ -1,2 +1,18 @@
+# python/model_2/requirements.txt
+--index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://pypi.org/simple
+
+# PyTorch CPU wheels
+torch==2.7.1+cpu
+
+# Numerics / PDF
+numpy==2.0.2
 pdfplumber==0.11.4
-numpy==1.26.4
+
+# HF stack (uses prebuilt Windows wheels on cp312)
+transformers==4.46.3
+tokenizers==0.20.3
+huggingface-hub==0.24.6
+
+# Sentence-Transformers on top of transformers
+sentence-transformers==2.6.1
