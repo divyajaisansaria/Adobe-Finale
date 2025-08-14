@@ -13,3 +13,5 @@
 .env
 /venv
 venv/
+
+/public/model1
