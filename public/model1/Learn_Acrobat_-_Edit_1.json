@@ -1,0 +1,150 @@
+{
+    "title": "",
+    "outline": [
+        {
+            "level": "H1",
+            "text": "Edit text in a PDF",
+            "page": 1
+        },
+        {
+            "level": "H3",
+            "text": "Set the default font for adding and editing text",
+            "page": 2
+        },
+        {
+            "level": "H3",
+            "text": "Change, replace, or delete text",
+            "page": 3
+        },
+        {
+            "level": "H2",
+            "text": "Format text",
+            "page": 4
+        },
+        {
+            "level": "H3",
+            "text": "Add new text",
+            "page": 5
+        },
+        {
+            "level": "H3",
+            "text": "Format You can change the text properties using the options under in the left pane.",
+            "page": 6
+        },
+        {
+            "level": "H3",
+            "text": "Move, rotate, or resize a text box",
+            "page": 6
+        },
+        {
+            "level": "H3",
+            "text": "Rotate Rotation 2. : Click and hold the pointer , drag in the direction you",
+            "page": 7
+        },
+        {
+            "level": "H3",
+            "text": "Add or edit lists",
+            "page": 8
+        },
+        {
+            "level": "H3",
+            "text": "Change font color",
+            "page": 8
+        },
+        {
+            "level": "H3",
+            "text": "Change font",
+            "page": 10
+        },
+        {
+            "level": "H3",
+            "text": "Change font size",
+            "page": 10
+        },
+        {
+            "level": "H2",
+            "text": "Redo text in Acrobat",
+            "page": 10
+        },
+        {
+            "level": "H3",
+            "text": "Undo text in Acrobat",
+            "page": 10
+        },
+        {
+            "level": "H3",
+            "text": "Change paragraph spacing",
+            "page": 10
+        },
+        {
+            "level": "H1",
+            "text": "Edit images or objects in a PDF",
+            "page": 12
+        },
+        {
+            "level": "H3",
+            "text": "About editing text and images",
+            "page": 12
+        },
+        {
+            "level": "H2",
+            "text": "Add images in a PDF",
+            "page": 12
+        },
+        {
+            "level": "H3",
+            "text": "Note:",
+            "page": 12
+        },
+        {
+            "level": "H2",
+            "text": "Modify images in a PDF",
+            "page": 13
+        },
+        {
+            "level": "H3",
+            "text": "Choose image Replace image: From the drop-down menu, select to select an image •",
+            "page": 13
+        },
+        {
+            "level": "H3",
+            "text": "Note:",
+            "page": 13
+        },
+        {
+            "level": "H3",
+            "text": "Delete images from a PDF",
+            "page": 14
+        },
+        {
+            "level": "H3",
+            "text": "Delete Alternatively, you can also select the image and press .",
+            "page": 14
+        },
+        {
+            "level": "H2",
+            "text": "Add Objects to PDF",
+            "page": 14
+        },
+        {
+            "level": "H3",
+            "text": "Video 1. From the left menu, select .",
+            "page": 15
+        },
+        {
+            "level": "H2",
+            "text": "Edit an image outside Acrobat",
+            "page": 15
+        },
+        {
+            "level": "H3",
+            "text": "Note: Select multiple items if you want to edit them together in the same file. To edit all the",
+            "page": 15
+        },
+        {
+            "level": "H3",
+            "text": "Adjust Objects Edit using 2. Under in the Edit panel, select , and then choose an editor.",
+            "page": 15
+        }
+    ]
+}
