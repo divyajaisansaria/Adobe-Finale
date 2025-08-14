@@ -15,6 +15,9 @@ export default function MainPage() {
   const [selectedFile, setSelectedFile] = React.useState<FileRecord | null>(null)
   const [persona, setPersona] = React.useState("")
   const [jobToBeDone, setJobToBeDone] = React.useState("")
+  
+  // 1. New state to hold the Adobe PDF viewer instance
+  const [adobeViewer, setAdobeViewer] = React.useState<any>(null);
 
   const refreshSources = React.useCallback(async () => {
     const records = await getAllFileRecords();
@@ -57,7 +60,7 @@ export default function MainPage() {
       />
       
       <main className="flex-1 overflow-hidden p-4">
-        {/* Desktop Layout (No Changes) */}
+        {/* --- Desktop Layout --- */}
         <div className="hidden h-full md:flex md:gap-4">
           <SourcesPanel
             sources={sources}
@@ -71,19 +74,24 @@ export default function MainPage() {
               title={selectedFile?.name}
               hasSources={hasSources}
               pdfUrl={selectedFile?.url}
-              persona={persona}
-              job={jobToBeDone}
-              onPersonaChange={setPersona}
-              onJobChange={setJobToBeDone}
+              // persona={persona}  // Persona and Job are handled by CenterIntake itself now
+              // job={jobToBeDone}
+              // onPersonaChange={setPersona}
+              // onJobChange={setJobToBeDone}
               onOpenAdd={() => setIsModalOpen(true)}
+              // 2. Pass the setter function to capture the viewer instance
+              onViewerReady={setAdobeViewer}
             />
           </div>
-          <StudioPanel hasSources={hasSources} />
+          {/* 3. Pass the selected file and viewer instance to the StudioPanel */}
+          <StudioPanel 
+            selectedFile={selectedFile} 
+            adobeViewer={adobeViewer} 
+          />
         </div>
 
-        {/* --- FINAL, ROBUST MOBILE LAYOUT --- */}
+        {/* --- Mobile Layout --- */}
         <div className="flex h-full flex-col gap-4 md:hidden">
-          {/* 1. Manual Tab Buttons (No Change) */}
           <div className="grid shrink-0 grid-cols-3 gap-2 rounded-lg bg-neutral-800 p-1">
             <Button
               variant={activeTab === 'sources' ? 'secondary' : 'ghost'}
@@ -108,10 +116,7 @@ export default function MainPage() {
             </Button>
           </div>
 
-          {/* 2. Content Area with Absolute Positioning */}
-          {/* This parent `div` creates the frame for the content. */}
           <div className="flex-1 relative">
-            {/* Each panel is now positioned absolutely within the frame, guaranteeing its size. */}
             <div className={`absolute inset-0 ${activeTab === 'sources' ? 'block' : 'hidden'}`}>
               <SourcesPanel
                 sources={sources}
@@ -126,15 +131,21 @@ export default function MainPage() {
                 title={selectedFile?.name}
                 hasSources={hasSources}
                 pdfUrl={selectedFile?.url}
-                persona={persona}
-                job={jobToBeDone}
-                onPersonaChange={setPersona}
-                onJobChange={setJobToBeDone}
+                // persona={persona}
+                // job={jobToBeDone}
+                // onPersonaChange={setPersona}
+                // onJobChange={setJobToBeDone}
                 onOpenAdd={() => setIsModalOpen(true)}
+                // 4. Pass the setter function here as well
+                onViewerReady={setAdobeViewer}
               />
             </div>
             <div className={`absolute inset-0 ${activeTab === 'studio' ? 'block' : 'hidden'}`}>
-              <StudioPanel hasSources={hasSources} />
+              {/* 5. Pass the props to the mobile StudioPanel too */}
+              <StudioPanel 
+                selectedFile={selectedFile} 
+                adobeViewer={adobeViewer} 
+              />
             </div>
           </div>
         </div>

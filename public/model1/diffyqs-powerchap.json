@@ -1,0 +1,55 @@
+{
+    "title": "Chapter 7",
+    "outline": [
+        {
+            "level": "H1",
+            "text": "Power series methods",
+            "page": 0
+        },
+        {
+            "level": "H2",
+            "text": "7.1 Power series",
+            "page": 0
+        },
+        {
+            "level": "H3",
+            "text": "7.1.1 Definition",
+            "page": 0
+        },
+        {
+            "level": "H3",
+            "text": "7.1.2 Radius of convergence",
+            "page": 1
+        },
+        {
+            "level": "H3",
+            "text": "7.1.3 Analytic functions",
+            "page": 3
+        },
+        {
+            "level": "H3",
+            "text": "7.1.4 Manipulating power series",
+            "page": 4
+        },
+        {
+            "level": "H3",
+            "text": "7.1.5 Power series for rational functions",
+            "page": 5
+        },
+        {
+            "level": "H3",
+            "text": "7.1.6 Exercises",
+            "page": 6
+        },
+        {
+            "level": "H2",
+            "text": "7.2 Series solutions of linear second order ODEs",
+            "page": 8
+        },
+        {
+            "level": "H3",
+            "text": "7.2.1 Exercises",
+            "page": 13
+        }
+    ]
+}
