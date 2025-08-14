@@ -10,14 +10,13 @@ import { FileText, MoreVertical, Trash, Pencil } from "lucide-react"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { FileRecord } from "@/lib/idb"
+import { runModel1OnUrl } from "@/lib/model1-client" // ⬅️ 1. ADDED: Import the model function
 
 // Custom SVG Imports
 import PdfIcon from '@/assets/icons/pdf-icon.svg';
-// --- 1. IMPORT THE CORRECT SVG ICONS ---
 import AddIcon from '@/assets/icons/add-icon.svg';
 import SideNavigationIcon from '@/assets/icons/side-navigation.svg';
 import PanelCloseIcon from '@/assets/icons/side-navigation.svg';
-
 
 export function SourcesPanel({
   sources = [],
@@ -33,9 +32,23 @@ export function SourcesPanel({
   const [collapsed, setCollapsed] = useState(false)
   const empty = (sources?.length ?? 0) === 0
 
+  // ⬅️ 2. ADDED: The handler function that calls the model
+  const handleSelect = async (file: FileRecord) => {
+    try {
+      // First, select the source to show it in the UI
+      onSelectSource(file.url, file.name)
+
+      // Then, trigger the background model processing
+      const publicJsonUrl = await runModel1OnUrl(file.url, file.name)
+      console.log("Model 1 JSON ready at:", publicJsonUrl)
+    } catch (e) {
+      console.error("Model 1 processing error:", e)
+    }
+  }
+
   const getFileIcon = (fileName: string, size: 'small' | 'large' = 'small') => {
     const className = size === 'small' ? "h-4 w-4 flex-shrink-0" : "h-5 w-5";
-    
+
     if (fileName.toLowerCase().endsWith('.pdf')) {
       return <PdfIcon className={className} />;
     }
@@ -50,7 +63,6 @@ export function SourcesPanel({
       <div className={`flex items-center justify-between border-b border-white/10 ${collapsed ? 'pb-2' : 'pb-4'}`}>
         {!collapsed && <div className="text-xl font-semibold text-white">Sources</div>}
         <div className="ml-auto">
-          {/* --- 2. USE THE SVG ICONS FOR THE TOGGLE --- */}
           {collapsed ? (
             <SideNavigationIcon
               className="h-6 w-6 cursor-pointer text-neutral-400 transition-colors hover:text-white"
@@ -71,7 +83,6 @@ export function SourcesPanel({
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-neutral-400 hover:bg-sky-700/50 hover:text-white" onClick={onOpenAdd}>
-                            {/* 3. USE THE SVG "ADD" ICON --- */}
                             <AddIcon className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
@@ -91,7 +102,7 @@ export function SourcesPanel({
                                         variant="ghost"
                                         size="icon"
                                         className="h-9 w-9 text-neutral-400 hover:bg-neutral-700/50"
-                                        onClick={() => onSelectSource(file.url, file.name)}
+                                        onClick={() => handleSelect(file)} // ⬅️ 3. UPDATED: Call handleSelect here
                                     >
                                         {getFileIcon(file.name, 'large')}
                                     </Button>
@@ -109,7 +120,6 @@ export function SourcesPanel({
         <>
           <div className="my-4 flex items-center gap-2">
             <Button onClick={onOpenAdd} className="h-11 w-full justify-center gap-2 rounded-lg bg-sky-600 text-white transition-colors hover:bg-sky-700" variant="default">
-              {/* 4. USE THE SVG "ADD" ICON --- */}
               <AddIcon className="h-4 w-4" />
               Add Sources
             </Button>
@@ -130,7 +140,7 @@ export function SourcesPanel({
                     <li
                       key={file.id}
                       className="group my-1 flex cursor-pointer items-center justify-between rounded-lg px-2 py-2.5 transition-colors duration-200 hover:bg-neutral-800"
-                      onClick={() => onSelectSource(file.url, file.name)}
+                      onClick={() => handleSelect(file)} // ⬅️ 3. UPDATED: Call handleSelect here too
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         {getFileIcon(file.name, 'small')}
