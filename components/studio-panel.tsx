@@ -23,6 +23,12 @@ type OutlineItem = {
   page: number;
 };
 
+// Type for the navigation command
+type NavigationTarget = {
+  page: number;
+  text: string;
+};
+
 const studioFeatures = [
   { name: 'Audio Overview', icon: <FileAudio2 />, featureKey: 'Audio Overview' },
   { name: 'Video Overview', icon: <FileVideo2 />, featureKey: 'Video Overview' },
@@ -32,20 +38,17 @@ const studioFeatures = [
 
 export function StudioPanel({
   selectedFile,
-  adobeViewer
+  onNavigateRequest,
 }: {
   selectedFile: FileRecord | null;
-  adobeViewer: any;
+  onNavigateRequest: (target: NavigationTarget) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
-
-  // State for the document outline
   const [outline, setOutline] = useState<OutlineItem[]>([]);
   const [isLoadingOutline, setIsLoadingOutline] = useState(false);
   const [outlineError, setOutlineError] = useState<string | null>(null);
 
-  // Fetch the outline whenever a new PDF is selected
   useEffect(() => {
     if (!selectedFile) {
       setOutline([]);
@@ -53,48 +56,52 @@ export function StudioPanel({
       return;
     }
 
+    const pollForOutline = async (filename: string, maxRetries: number, delay: number) => {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const res = await fetch(`/api/outline/${encodeURIComponent(filename)}`);
+          if (res.ok) {
+            const data = await res.json();
+            setOutline(data.outline || []);
+            setIsLoadingOutline(false);
+            return; // Success
+          }
+          if (res.status !== 404) {
+            throw new Error(`Server error: ${res.status}`);
+          }
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } catch (err: any) {
+          setOutlineError(err.message);
+          setIsLoadingOutline(false);
+          return;
+        }
+      }
+      setOutlineError("Nothing to be shown here.");
+      setIsLoadingOutline(false);
+    };
+
     setIsLoadingOutline(true);
     setOutlineError(null);
     setOutline([]);
 
-    // Convert filename to JSON, replace spaces with underscores
     const jsonFilename = selectedFile.name
       .replace(/\.pdf$/i, '.json')
       .replace(/ /g, '_');
+    
+    pollForOutline(jsonFilename, 20, 500);
 
-    fetch(`/api/outline/${encodeURIComponent(jsonFilename)}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Outline not found.');
-        return res.json();
-      })
-      .then(data => {
-        setOutline(data.outline || []);
-        setIsLoadingOutline(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setOutlineError(err.message);
-        setIsLoadingOutline(false);
-      });
   }, [selectedFile]);
 
-  // Navigate to a specific page in Adobe PDF
-  const handleGoToPage = (pageNumber: number) => {
-    if (!adobeViewer) {
-      console.warn("Adobe Viewer not ready.");
-      alert("PDF viewer is not ready. Please wait and try again.");
-      return;
-    }
-
-    adobeViewer.getAPIs().then((apis: any) => {
-      apis.goToLocation(pageNumber)
-        .then(() => console.log(`Navigated to page ${pageNumber}`))
-        .catch((err: any) => console.error(err));
-    });
+  // Handler to queue the navigation command
+  const handleGoToPage = (pageNumber: number, text: string) => {
+    // --- THIS IS THE FIX for 0-based vs 1-based indexing ---
+    // The Adobe API is 1-based, so we add 1 to your model's page number.
+    const targetPage = pageNumber + 1;
+    console.log(`Queueing navigation command for page ${targetPage} (Original was ${pageNumber})`);
+    onNavigateRequest({ page: targetPage, text: text });
   };
 
   const renderStudioContent = () => {
-    // Only show headings with text length ≥ 5
     const filteredOutline = outline.filter(item => item.text && item.text.trim().length >= 5);
 
     return (
@@ -116,8 +123,8 @@ export function StudioPanel({
               <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
             </div>
           ) : outlineError ? (
-            <div className="rounded-lg border border-red-900/50 bg-red-900/20 p-4 text-center text-sm text-red-300">
-              {outlineError}
+            <div className="rounded-lg border border-white/10 bg-black/10 p-6 text-center text-sm text-neutral-400">
+              <p>{outlineError}</p>
             </div>
           ) : filteredOutline.length > 0 ? (
             <div className="flex flex-col gap-1">
@@ -128,7 +135,7 @@ export function StudioPanel({
                   variant="ghost"
                   className="h-auto w-full justify-start text-left text-neutral-300 hover:bg-neutral-800 hover:text-white"
                   style={{ paddingLeft: `${(parseInt(item.level.substring(1))) * 0.75}rem` }}
-                  onClick={() => handleGoToPage(item.page)}
+                  onClick={() => handleGoToPage(item.page, item.text)}
                 >
                   <span className="truncate">{item.text}</span>
                 </Button>

@@ -32,10 +32,10 @@ html {
       <body>
         {children}
         
-        <Script 
-          src="https://documentcloud.adobe.com/view-sdk/main.js" 
-          strategy="lazyOnload" 
-        />
+        <Script
+  src="https://acrobatservices.adobe.com/view-sdk/viewer.js"
+  strategy="afterInteractive"
+/>
       </body>
     </html>
   )

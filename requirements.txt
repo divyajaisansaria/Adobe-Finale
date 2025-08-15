@@ -3,7 +3,7 @@
 --extra-index-url https://pypi.org/simple
 
 # PyTorch CPU wheels
-torch==2.7.1+cpu
+torch==2.7.1
 
 # Numerics / PDF
 numpy==2.0.2

@@ -8,16 +8,21 @@ import { StudioPanel } from "@/components/studio-panel"
 import { getAllFileRecords, deleteFileRecord, type FileRecord } from "@/lib/idb"
 import { Button } from "@/components/ui/button"
 
+// Type for the navigation command object
+type NavigationTarget = {
+  page: number;
+  text: string;
+};
+
 export default function MainPage() {
   const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [sources, setSources] = React.useState<FileRecord[]>([])
   const [activeTab, setActiveTab] = React.useState("sources")
   const [selectedFile, setSelectedFile] = React.useState<FileRecord | null>(null)
-  const [persona, setPersona] = React.useState("")
-  const [jobToBeDone, setJobToBeDone] = React.useState("")
   
-  // 1. New state to hold the Adobe PDF viewer instance
-  const [adobeViewer, setAdobeViewer] = React.useState<any>(null);
+  // State for the command queue and to track if the viewer is ready
+  const [navigationQueue, setNavigationQueue] = React.useState<NavigationTarget | null>(null);
+  const [isViewerReady, setIsViewerReady] = React.useState(false);
 
   const refreshSources = React.useCallback(async () => {
     const records = await getAllFileRecords();
@@ -40,9 +45,9 @@ export default function MainPage() {
     const file = sources.find(s => s.url === url && s.name === name)
     if (file) {
       setSelectedFile(file)
-      setPersona(file.persona || "")
-      setJobToBeDone(file.jobToBeDone || "")
-
+      // Reset queue and readiness when a new file is selected
+      setNavigationQueue(null); 
+      setIsViewerReady(false);
       if (window.innerWidth < 768) {
         setActiveTab('chat');
       }
@@ -74,19 +79,16 @@ export default function MainPage() {
               title={selectedFile?.name}
               hasSources={hasSources}
               pdfUrl={selectedFile?.url}
-              // persona={persona}  // Persona and Job are handled by CenterIntake itself now
-              // job={jobToBeDone}
-              // onPersonaChange={setPersona}
-              // onJobChange={setJobToBeDone}
               onOpenAdd={() => setIsModalOpen(true)}
-              // 2. Pass the setter function to capture the viewer instance
-              onViewerReady={setAdobeViewer}
+              // Pass the readiness callback and the command
+              navigationTarget={isViewerReady ? navigationQueue : null}
+              onViewerReady={setIsViewerReady}
             />
           </div>
-          {/* 3. Pass the selected file and viewer instance to the StudioPanel */}
           <StudioPanel 
             selectedFile={selectedFile} 
-            adobeViewer={adobeViewer} 
+            // Pass the queue setter function to the StudioPanel
+            onNavigateRequest={setNavigationQueue}
           />
         </div>
 
@@ -131,20 +133,15 @@ export default function MainPage() {
                 title={selectedFile?.name}
                 hasSources={hasSources}
                 pdfUrl={selectedFile?.url}
-                // persona={persona}
-                // job={jobToBeDone}
-                // onPersonaChange={setPersona}
-                // onJobChange={setJobToBeDone}
                 onOpenAdd={() => setIsModalOpen(true)}
-                // 4. Pass the setter function here as well
-                onViewerReady={setAdobeViewer}
+                navigationTarget={isViewerReady ? navigationQueue : null}
+                onViewerReady={setIsViewerReady}
               />
             </div>
             <div className={`absolute inset-0 ${activeTab === 'studio' ? 'block' : 'hidden'}`}>
-              {/* 5. Pass the props to the mobile StudioPanel too */}
               <StudioPanel 
                 selectedFile={selectedFile} 
-                adobeViewer={adobeViewer} 
+                onNavigateRequest={setNavigationQueue}
               />
             </div>
           </div>

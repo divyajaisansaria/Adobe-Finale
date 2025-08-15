@@ -1,7 +1,7 @@
 from huggingface_hub import hf_hub_download, HfApi
 import os
 
-MODELS_DIR = "python\model_2\models"
+MODELS_DIR = os.path.join("python", "model_2", "models")
 
 MODELS_TO_DOWNLOAD = {
     "BAAI/bge-small-en-v1.5": {
