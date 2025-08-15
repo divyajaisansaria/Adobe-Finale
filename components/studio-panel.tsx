@@ -86,8 +86,8 @@ export function StudioPanel({
 
     const jsonFilename = selectedFile.name
       .replace(/\.pdf$/i, '.json')
-      .replace(/ /g, '_');
-    
+      .replace(/[^\w.\-]+/g, '_');
+
     pollForOutline(jsonFilename, 20, 500);
 
   }, [selectedFile]);
