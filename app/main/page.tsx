@@ -7,30 +7,24 @@ import { CenterIntake } from "@/components/center-intake"
 import { StudioPanel } from "@/components/studio-panel"
 import { getAllFileRecords, deleteFileRecord, type FileRecord } from "@/lib/idb"
 import { Button } from "@/components/ui/button"
+import { InsightPanel } from "@/components/InsightPanel"
+import { Lightbulb } from "lucide-react"
 
-// Added imports for the Insight Panel
-import { InsightPanel } from '@/components/InsightPanel'
-import { Lightbulb } from 'lucide-react'
-
-// Type for the navigation command object
-type NavigationTarget = {
-  page: number
-  text: string
-}
+type NavigationTarget = { page: number; text: string }
 
 export default function MainPage() {
-  // Existing state
   const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [sources, setSources] = React.useState<FileRecord[]>([])
   const [activeTab, setActiveTab] = React.useState<"sources" | "chat" | "studio">("sources")
   const [selectedFile, setSelectedFile] = React.useState<FileRecord | null>(null)
   const [navigationQueue, setNavigationQueue] = React.useState<NavigationTarget | null>(null)
   const [isViewerReady, setIsViewerReady] = React.useState(false)
+  const [currentSelection, setCurrentSelection] = React.useState<string>("")
 
-  // Added state for the Insight Panel
+  // Insight panel state
   const [isInsightPanelOpen, setIsInsightPanelOpen] = React.useState(false)
+  const [triggerFetch, setTriggerFetch] = React.useState(false)
 
-  // Existing functions
   const refreshSources = React.useCallback(async () => {
     const records = await getAllFileRecords()
     setSources(records.reverse())
@@ -42,9 +36,7 @@ export default function MainPage() {
 
   const handleRemoveSource = async (id: number) => {
     await deleteFileRecord(id)
-    if (selectedFile?.id === id) {
-      setSelectedFile(null)
-    }
+    if (selectedFile?.id === id) setSelectedFile(null)
     await refreshSources()
   }
 
@@ -54,9 +46,7 @@ export default function MainPage() {
       setSelectedFile(file)
       setNavigationQueue(null)
       setIsViewerReady(false)
-      if (typeof window !== "undefined" && window.innerWidth < 768) {
-        setActiveTab("chat")
-      }
+      if (typeof window !== "undefined" && window.innerWidth < 768) setActiveTab("chat")
     }
   }
 
@@ -71,7 +61,7 @@ export default function MainPage() {
       />
 
       <main className="flex-1 overflow-hidden p-4">
-        {/* --- Desktop Layout --- */}
+        {/* Desktop layout */}
         <div className="hidden h-full md:flex md:gap-4">
           <SourcesPanel
             sources={sources}
@@ -89,39 +79,34 @@ export default function MainPage() {
               onOpenAdd={() => setIsModalOpen(true)}
               navigationTarget={isViewerReady ? navigationQueue : null}
               onViewerReady={setIsViewerReady}
+              onSelectionChange={setCurrentSelection} // ✅ pass selection up
             />
           </div>
 
-          <StudioPanel
-            selectedFile={selectedFile}
-            onNavigateRequest={setNavigationQueue}
-          />
+          <StudioPanel selectedFile={selectedFile} onNavigateRequest={setNavigationQueue} />
         </div>
 
-        {/* --- Mobile Layout --- */}
+        {/* Mobile layout */}
         <div className="flex h-full flex-col gap-4 md:hidden">
           <div className="grid shrink-0 grid-cols-3 gap-2 rounded-lg border bg-secondary p-1 text-secondary-foreground">
             <Button
               variant={activeTab === "sources" ? "secondary" : "ghost"}
               onClick={() => setActiveTab("sources")}
-              className="h-auto py-1.5 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-              data-state={activeTab === "sources" ? "active" : "inactive"}
+              className="h-auto py-1.5"
             >
               Sources
             </Button>
             <Button
               variant={activeTab === "chat" ? "secondary" : "ghost"}
               onClick={() => setActiveTab("chat")}
-              className="h-auto py-1.5 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-              data-state={activeTab === "chat" ? "active" : "inactive"}
+              className="h-auto py-1.5"
             >
               Chat
             </Button>
             <Button
               variant={activeTab === "studio" ? "secondary" : "ghost"}
               onClick={() => setActiveTab("studio")}
-              className="h-auto py-1.5 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-              data-state={activeTab === "studio" ? "active" : "inactive"}
+              className="h-auto py-1.5"
             >
               Studio
             </Button>
@@ -146,36 +131,40 @@ export default function MainPage() {
                 onOpenAdd={() => setIsModalOpen(true)}
                 navigationTarget={isViewerReady ? navigationQueue : null}
                 onViewerReady={setIsViewerReady}
+                onSelectionChange={setCurrentSelection}
               />
             </div>
 
             <div className={`absolute inset-0 ${activeTab === "studio" ? "block" : "hidden"}`}>
-              <StudioPanel
-                selectedFile={selectedFile}
-                onNavigateRequest={setNavigationQueue}
-              />
+              <StudioPanel selectedFile={selectedFile} onNavigateRequest={setNavigationQueue} />
             </div>
           </div>
         </div>
       </main>
 
-      {/* --- ADDITIONS FOR INSIGHT PANEL --- */}
-
       {/* Floating Insight Button */}
       <Button
         className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg glass-hover"
-        onClick={() => setIsInsightPanelOpen(true)}
+        onClick={() => {
+          if (!currentSelection.trim()) {
+            alert("Please select text to generate insights!")
+            return
+          }
+          setIsInsightPanelOpen(true)
+          setTriggerFetch(prev => !prev) // toggle to trigger fetch
+        }}
         size="icon"
         aria-label="Open insights"
       >
         <Lightbulb className="h-6 w-6" />
       </Button>
 
-      {/* Render the Insight Panel */}
+      {/* Insight Panel */}
       <InsightPanel
         isOpen={isInsightPanelOpen}
         onClose={() => setIsInsightPanelOpen(false)}
-        currentSection={null}
+        currentSection={currentSelection}
+        triggerFetch={triggerFetch}
       />
     </div>
   )

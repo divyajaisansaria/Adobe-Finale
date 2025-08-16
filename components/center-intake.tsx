@@ -12,9 +12,10 @@ export function CenterIntake({
   title = "Untitled notebook",
   hasSources = false,
   pdfUrl,
-  onOpenAdd = () => {},
+  onOpenAdd = () => { },
   navigationTarget,
-  onViewerReady
+  onViewerReady,
+  onSelectionChange, // ✅ new prop
 }: {
   title?: string
   hasSources?: boolean
@@ -22,6 +23,7 @@ export function CenterIntake({
   onOpenAdd?: () => void
   navigationTarget?: { page?: number | string; text?: string } | null
   onViewerReady?: (ready: boolean) => void
+  onSelectionChange?: (text: string) => void
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<any>(null)
@@ -31,7 +33,6 @@ export function CenterIntake({
   const sdkReadyRef = useRef<boolean>(false)
   const currentFileKeyRef = useRef<string>("")
   const isRunningRef = useRef(false)
-
   const instanceId = useMemo(
     () => `adobe-dc-view-${Math.random().toString(36).slice(2)}`,
     []
@@ -99,16 +100,19 @@ export function CenterIntake({
                   console.log("selectedText =", selectedTextRef.current)
 
                   const q = selectedTextRef.current.trim()
-                  if (q && !isRunningRef.current) {
-                    isRunningRef.current = true
-                    try {
-                      console.log("Sending selected text to model:", q)
-                      const url = await runModel2WithSelection(q)
-                      console.log("Model 2 output folder:", url)
-                    } catch (err) {
-                      console.error("Model 2 error:", err)
-                    } finally {
-                      isRunningRef.current = false
+                  if (q) {
+                    // ✅ Notify parent about the selected text
+                    onSelectionChange?.(q)
+
+                    if (!isRunningRef.current) {
+                      isRunningRef.current = true
+                      try {
+                        console.log("Sending selected text to model:", q)
+                        const url = await runModel2WithSelection(q)
+                        console.log("Model 2 output folder:", url)
+                      } finally {
+                        isRunningRef.current = false
+                      }
                     }
                   }
                 } catch (e) {
