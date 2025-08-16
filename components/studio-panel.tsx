@@ -11,6 +11,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { FileRecord } from "@/lib/idb"
+import SideNavigationIcon from '@/assets/icons/side-navigation.svg';
+import PanelCloseIcon from '@/assets/icons/side-navigation.svg';
 
 type OutlineItem = {
   level: string
@@ -124,6 +126,7 @@ export function StudioPanel({
 
     return (
       <div className="flex-1 overflow-y-auto px-4 py-4">
+
         {/* Feature tiles */}
         <div className="grid grid-cols-2 gap-3">
           {studioFeatures.map((feature) => (
@@ -226,29 +229,37 @@ export function StudioPanel({
       className={`glass-card glass-hover flex h-full flex-col transition-all duration-300 rounded-2xl
       ${collapsed ? "w-[56px]" : "w-full sm:w-[300px] md:w-[350px] lg:w-[400px]"}`}
     >
-      <div className="flex items-center justify-between border-b border-border px-4 py-2">
-        {activeFeature === "Summary" ? (
-          <ChevronLeft
-            className="h-6 w-6 cursor-pointer text-muted-foreground hover:text-foreground"
-            onClick={() => setActiveFeature(null)}
-          />
-        ) : (
-          !collapsed && <div className="text-sm font-medium text-foreground">Studio</div>
-        )}
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
+        {/* Left side: Studio text or back icon */}
+        <div>
+          {!collapsed && activeFeature === "Summary" ? (
+            <ChevronLeft
+              className="h-6 w-6 cursor-pointer text-muted-foreground hover:text-foreground"
+              onClick={() => setActiveFeature(null)}
+            />
+          ) : (
+            !collapsed && <div className="text-sm font-medium text-neutral-200">Studio</div>
+          )}
+        </div>
 
-        <div className="ml-auto">
+        {/* Right side: Collapse/Expand button */}
+        <div>
           {collapsed ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
+            <SideNavigationIcon
+              className="h-6 w-6 cursor-pointer text-neutral-400 hover:text-white"
               onClick={() => setCollapsed(false)}
-            >
-              <ChevronLeft className="h-6 w-6 text-muted-foreground" />
-            </Button>
-          ) : null}
+            />
+          ) : (
+            <PanelCloseIcon
+              className="h-6 w-6 cursor-pointer text-neutral-400 hover:text-white"
+              onClick={() => setCollapsed(true)}
+            />
+          )}
         </div>
       </div>
+
+
+
 
       {collapsed ? (
         <TooltipProvider delayDuration={0}>
