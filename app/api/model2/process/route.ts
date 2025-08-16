@@ -85,12 +85,11 @@ export async function POST(req: NextRequest) {
       Buffer.from(JSON.stringify(inputJson, null, 2), "utf8")
     );
 
-    // 2) Choose a unique public output folder: public/models_2/<runId>
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const hash = crypto.createHash("sha1").update(selectedText).digest("hex").slice(0, 12);
-    const runId = `${stamp}-${hash}`;
-    const publicOut = path.join(process.cwd(), "public", "models_2", runId);
+    // 2) Always use a fixed public output folder: public/model2/outputs
+    const publicOut = path.join(process.cwd(), "public", "model2", "outputs");
     await fs.mkdir(publicOut, { recursive: true });
+
+    
 
     // 3) Paths for python + models
     const python = getPythonCmd();
@@ -125,7 +124,7 @@ export async function POST(req: NextRequest) {
     const line = result.stdout.split(/\r?\n/).find((l) => l.startsWith("SAVED_DIR::"));
     const dirPath = line ? line.replace("SAVED_DIR::", "").trim() : publicOut;
 
-    const outputDirUrl = `/models_2/${path.basename(dirPath)}/`;
+    const outputDirUrl = `/model2/outputs/`;
     return NextResponse.json({ ok: true, outputDirUrl });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "unknown_error" }, { status: 500 });

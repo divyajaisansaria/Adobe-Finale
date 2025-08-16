@@ -1,5 +1,5 @@
 # process_pdf.py — CPU-only, offline PDF recommender (selected-text query mode, normalized scoring).
-# Writes a per-PDF "<name>_output.json" after each PDF, and a single "output.json" summary at the end.
+# Writes a per-PDF "<name>_output.json" after each PDF.
 # No persona/job/timestamp in outputs. Minimal console output (only errors + final summary).
 
 import os
@@ -87,16 +87,10 @@ def format_extracted_sections(ranked_chunks):
     return [{
         "document": c["document"],
         "section_title": c["title"],
+        "refined_text": c.get("text", ""),
         "importance_rank": i + 1,
         "page_number": c["page"]
     } for i, c in enumerate(ranked_chunks)]
-
-def format_subsection_analysis(ranked_chunks):
-    return [{
-        "document": c["document"],
-        "refined_text": clean_text_for_output(c.get("text", "")),
-        "page_number": c["page"]
-    } for c in ranked_chunks]
 
 # --------------------------
 # Tokenization / lexical coverage
@@ -481,8 +475,7 @@ def process_single_pdf(pdf_path, file_name, ranker, persona, task, output_dir,
             "source_file": file_name,
             "query": query or ""
         },
-        "extracted_sections": format_extracted_sections(cleaned),
-        "subsection_analysis": format_subsection_analysis(cleaned)
+        "extracted_sections": format_extracted_sections(cleaned)
     }
 
     out_name = sanitize_filename(os.path.splitext(file_name)[0]) + "_output.json"
@@ -584,11 +577,9 @@ def main(input_dir, output_dir, model_dir,
         selected_docs = filtered_pdf_files[: (max_docs or len(filtered_pdf_files))]
 
     # Process PDFs one by one, writing each per-PDF file immediately
-    processed_meta = []
-    skipped = []
     for fname in selected_docs:
         try:
-            res = process_single_pdf(
+            process_single_pdf(
                 os.path.join(pdfs_dir, fname), fname, ranker, persona, task, output_dir,
                 top_k=top_k,
                 min_words=min_words,
@@ -599,38 +590,19 @@ def main(input_dir, output_dir, model_dir,
                 batch_size=batch_size,
                 query=enriched_query
             )
-            if res:
-                processed_meta.append({
-                    "file": fname,
-                    "output": os.path.basename(sanitize_filename(os.path.splitext(fname)[0]) + "_output.json")
-                })
-            else:
-                skipped.append({"file": fname})
-        except Exception as e:
-            skipped.append({"file": fname, "error": str(e)})
+        except Exception:
+            # Errors are handled silently for individual files, they just won't produce output.
+            pass
 
-    # Final summary (one file) — metadata only includes input_documents + query
-    final_summary = {
-        "metadata": {
-            "input_documents": selected_docs,
-            "query": enriched_query
-        },
-        "doc_scores": [{"file": n, "score": float(s)} for (n, s) in (doc_scores_list or [])],
-        "summary": {
-            "processed": processed_meta,
-            "skipped": skipped
-        }
-    }
-    overall_output_path = os.path.join(output_dir, "output.json")
-    atomic_write_json(final_summary, overall_output_path)
-    print(f"✅ Done. Summary written to: {overall_output_path}")
-    # ⬇️ ADD THIS LINE:
+    # Final summary file creation is disabled.
+    print(f"✅ Done. Per-PDF outputs written to: {output_dir}")
     print(f"SAVED_DIR::{output_dir}", flush=True)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CPU-only, offline PDF recommender — per-PDF outputs + final summary.")
+    parser = argparse.ArgumentParser(description="CPU-only, offline PDF recommender — per-PDF outputs.")
     parser.add_argument("input_dir", help="Directory containing 'input.json' and the 'PDFs' folder.")
-    parser.add_argument("output_dir", help="Directory where outputs and summary will be saved.")
+    parser.add_argument("output_dir", help="Directory where outputs will be saved.")
     parser.add_argument("model_dir", help="Directory containing local model folders.")
     parser.add_argument("--top_k", type=int, default=5, help="How many top sections to return per selected PDF.")
     parser.add_argument("--per_doc_k", type=int, default=2, help="Max selections per document.")

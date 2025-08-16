@@ -131,7 +131,8 @@ export function SourcesPanel({
       ) : (
         // EXPANDED MODE
         <>
-          <div className=" card-hover-glow my-4 flex items-center gap-2">
+          {/* Action Section (NOT scrollable) */}
+          <div className="pt-4 pb-4 border-b border-border">
             <Button
               onClick={onOpenAdd}
               className="h-11 w-full justify-center gap-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
@@ -142,6 +143,7 @@ export function SourcesPanel({
             </Button>
           </div>
 
+          {/* Scrollable Content Area */}
           {empty ? (
             <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-muted/50">
@@ -152,7 +154,7 @@ export function SourcesPanel({
               </p>
             </div>
           ) : (
-            <div className="relative -mx-4 mt-2 flex-1 overflow-hidden px-1">
+            <div className="relative -mx-4 mt-4 flex-1 overflow-hidden px-1">
               <ScrollArea className="h-full">
                 <ul className="px-3 pb-3">
                   {sources.map((file) => (

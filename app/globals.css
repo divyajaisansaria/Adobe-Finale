@@ -30,7 +30,7 @@
   --muted-foreground: oklch(0.45 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
+  --border: oklch(0.922 0 .05);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
@@ -40,9 +40,9 @@
 
 /* ---- Design tokens (dark) ---- */
 .dark {
-  --background: #121212;
+  --background: #0000;
   --foreground: oklch(0.97 0 0);
-  --card: #171717;
+  --card: #21252b;
   --card-foreground: oklch(0.97 0 0);
   --popover: #171717;
   --popover-foreground: oklch(0.97 0 0);
@@ -120,12 +120,12 @@
 
   .dark .card-hover-glow:hover {
     border-color: rgba(255, 255, 255, 0.15); 
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
   }
 
   .card-hover-glow:hover {
    border-color: rgba(0, 0, 0, 0.15);
-   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -138,4 +138,70 @@ html.dark .gradient-text-rb {
   .gradient-text-rb {
     color: var(--rb1);
   }
+}
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-stroke);
+  border-radius: 18px;
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(4px) saturate(160%);
+  backdrop-filter: blur(4px) saturate(160%);
+  overflow: clip; /* clean clipped edges on shadows/children */
+}
+
+/* faint inner highlight for “real glass” edge */
+.glass-card::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.04) 40%, transparent 60%) ;
+  mix-blend-mode: screen;
+  opacity: .65;
+}
+
+/* subtle top glossy streak */
+.gloss {
+  position: relative;
+}
+.gloss::after {
+  content: "";
+  position: absolute; left: 10%; right: 10%; top: 0; height: 48px;
+  border-radius: 0 0 24px 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0));
+  pointer-events: none;
+  opacity: .45;
+}
+
+/* Hover elevate — tiny & tasteful */
+@media (prefers-reduced-motion: no-preference) {
+  .glass-hover {
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .glass-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.18);
+  }
+}
+
+/* Light dividers inside glass (replaces heavy bars) */
+.glass-divider {
+  border-top: 1px solid rgba(255,255,255,0.34);
+}
+html.dark .glass-divider {
+  border-top: 1px solid rgba(255,255,255,0.14);
+}
+
+/* Buttons/tiles inside glass — keep them flatter */
+.glass-tile {
+  background: rgba(255,255,255,0.18);
+  -webkit-backdrop-filter: blur(4px) saturate(150%);
+  backdrop-filter: blur(4px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.32);
+  border-radius: 12px;
+}
+html.dark .glass-tile {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
 }
