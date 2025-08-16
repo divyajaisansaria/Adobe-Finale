@@ -1,8 +1,7 @@
 // app/api/summary/route.ts
 import { NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+import { execFile } from "child_process"
+import path from "path"
 
 export async function POST(req: Request) {
   try {
@@ -11,20 +10,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing pdfUrl" }, { status: 400 })
     }
 
-    // Use a valid Gemini model
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",  // or "gemini-2.5-flash"
+    // Path to your Python script
+    const scriptPath = path.join(process.cwd(), "python_scripts", "summarygenerator.py")
+
+    // Call Python 3.11
+    const summary: string = await new Promise((resolve, reject) => {
+      execFile(
+        "python3.11",
+        [scriptPath, pdfUrl], // pass pdfUrl as argument
+        { encoding: "utf-8" },
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error("Python error:", stderr)
+            return reject(error)
+          }
+          resolve(stdout.trim())
+        }
+      )
     })
-
-    const prompt = `You are an expert AI summarizer. Summarize the content of the PDF located at the following URL. 
-Focus on the key points, main ideas, and important details. 
-Provide the summary in clear, concise, and easy-to-understand language. 
-
-PDF URL: ${pdfUrl}`;
-
-
-    const result = await model.generateContent(prompt)
-    const summary = result.response.text()
 
     return NextResponse.json({ summary })
   } catch (err: any) {

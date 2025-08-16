@@ -16,3 +16,5 @@ huggingface-hub==0.24.6
 
 # Sentence-Transformers on top of transformers
 sentence-transformers==2.6.1
+google-generativeai 
+python-dotenv

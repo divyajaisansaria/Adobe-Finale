@@ -4,10 +4,9 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { X, Lightbulb, Volume2, Sparkles, BookOpen, TrendingUp } from "lucide-react"
+import { X, Lightbulb, Volume2, Sparkles, BookOpen } from "lucide-react"
 
 interface InsightPanelProps {
   isOpen: boolean
@@ -21,7 +20,6 @@ interface Fact {
   title: string
   content: string
   category: string
-  confidence: number
 }
 
 export function InsightPanel({ isOpen, onClose, currentSection, triggerFetch }: InsightPanelProps) {
@@ -29,55 +27,106 @@ export function InsightPanel({ isOpen, onClose, currentSection, triggerFetch }: 
   const [facts, setFacts] = useState<Fact[]>([])
   const [loading, setLoading] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [speakingText, setSpeakingText] = useState<string | null>(null)
 
   useEffect(() => setIsMounted(true), [])
 
-  // Debug: watch triggerFetch and currentSection
   useEffect(() => {
-    console.log("InsightPanel: triggerFetch changed!", triggerFetch, "currentSection:", currentSection)
     if (currentSection && triggerFetch) {
       fetchFacts(currentSection)
     }
   }, [triggerFetch])
 
   const fetchFacts = async (text: string) => {
-    console.log("Fetching insights for text:", text) // 🔹 debug log
-    setLoading(true)
+    console.log("Fetching insights for text:", text);
+    setLoading(true);
     try {
       const res = await fetch("/api/insights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
-      })
-      const data = await res.json()
-      console.log("Insight API response:", data) // 🔹 debug log
-      setFacts(data.facts || [])
+      });
+      const data = await res.json();
+      const newFacts: Fact[] = data.facts || [];
+      setFacts(newFacts);
+
+      // Auto-switch tab based on first new insight
+      if (newFacts.length > 0) {
+        const firstCategory = newFacts[0].category.toLowerCase();
+        let tabValue = "facts"; // default
+        if (firstCategory === "did you know") tabValue = "facts";
+        else if (firstCategory === "contradiction") tabValue = "contradictions";
+        else if (firstCategory === "takeaway") tabValue = "takeaways";
+        setActiveTab(tabValue);
+      }
+
     } catch (err) {
-      console.error("Error fetching facts:", err)
+      console.error("Error fetching facts:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
 
   const speakText = (text: string) => {
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.rate = 0.9
-      speechSynthesis.speak(utterance)
+    if (!("speechSynthesis" in window)) return
+
+    // Toggle speech on/off
+    if (speakingText === text) {
+      speechSynthesis.cancel()
+      setSpeakingText(null)
+      return
     }
+
+    speechSynthesis.cancel() // Stop any previous speech
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 0.9
+    utterance.onend = () => setSpeakingText(null)
+    speechSynthesis.speak(utterance)
+    setSpeakingText(text)
+  }
+
+  const renderFacts = (categoryFilter: string | null) => {
+    const filtered = categoryFilter
+      ? facts.filter(f => f.category.toLowerCase() === categoryFilter.toLowerCase())
+      : facts
+
+    return filtered.map(fact => (
+      <Card
+        key={fact.id}
+        className={`glass-tile glass-hover ${speakingText === fact.content ? "ring-2 ring-yellow-400" : ""}`}
+      >
+        <CardHeader className="pb-3 flex justify-between items-start">
+          <div className="flex items-center space-x-2">
+            <BookOpen className={`h-5 w-5 ${fact.category.toLowerCase() === "contradiction"
+                ? "text-red-500"
+                : fact.category.toLowerCase() === "takeaway"
+                  ? "text-green-500"
+                  : "text-blue-500"
+              }`} />
+            <CardTitle className="text-lg">{fact.title}</CardTitle>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => speakText(fact.content)}>
+            <Volume2 className="h-4 w-4" />
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">{fact.content}</p>
+        </CardContent>
+      </Card>
+    ))
   }
 
   const panelContent = (
     <div
-      className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-        isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
+      className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
       onClick={onClose}
     >
       <div
-        className={`glass-card fixed top-0 h-full w-full max-w-2xl transform transition-transform duration-300 ${
-          isOpen ? "translate-x-0 ease-out" : "translate-x-full ease-in"
-        }`}
+        className={`glass-card fixed top-0 h-full w-full max-w-2xl transform transition-transform duration-300 ${isOpen ? "translate-x-0 ease-out" : "translate-x-full ease-in"
+          }`}
         style={{ right: 0 }}
         onClick={e => e.stopPropagation()}
       >
@@ -99,44 +148,36 @@ export function InsightPanel({ isOpen, onClose, currentSection, triggerFetch }: 
                   <Sparkles className="h-4 w-4" />
                   <span>Did You Know</span>
                 </TabsTrigger>
+                <TabsTrigger value="contradictions" className="space-x-2">
+                  <Lightbulb className="h-4 w-4 text-red-400" />
+                  <span>Contradictions</span>
+                </TabsTrigger>
+                <TabsTrigger value="takeaways" className="space-x-2">
+                  <Lightbulb className="h-4 w-4 text-green-400" />
+                  <span>Key Takeaways</span>
+                </TabsTrigger>
               </TabsList>
 
               <div className="mt-4 flex-1 overflow-hidden">
                 <TabsContent value="facts" className="h-full m-0">
                   <ScrollArea className="h-full pr-3">
-                    <div className="space-y-4">
-                      {loading
-                        ? Array(3)
-                            .fill(0)
-                            .map((_, idx) => (
-                              <Card key={idx} className="glass-tile animate-pulse h-24" />
-                            ))
-                        : facts.map(fact => (
-                            <Card key={fact.id} className="glass-tile glass-hover">
-                              <CardHeader className="pb-3 flex justify-between items-start">
-                                <div className="flex items-center space-x-2">
-                                  <BookOpen className="h-5 w-5 text-blue-500" />
-                                  <CardTitle className="text-lg">{fact.title}</CardTitle>
-                                </div>
-                                <Button variant="ghost" size="sm" onClick={() => speakText(fact.content)}>
-                                  <Volume2 className="h-4 w-4" />
-                                </Button>
-                              </CardHeader>
-                              <CardContent>
-                                <p className="text-muted-foreground mb-3">{fact.content}</p>
-                                <div className="flex items-center justify-between">
-                                  <Badge variant="secondary" className="capitalize">{fact.category}</Badge>
-                                  <div className="flex items-center space-x-1">
-                                    <TrendingUp className="h-3 w-3 text-green-500" />
-                                    <span className="text-xs text-muted-foreground">
-                                      {Math.round(fact.confidence * 100)}% confidence
-                                    </span>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                    </div>
+                    <div className="space-y-4">{loading ? Array(3).fill(0).map((_, idx) => (
+                      <Card key={idx} className="glass-tile animate-pulse h-24" />
+                    )) : renderFacts(null)}</div>
+                  </ScrollArea>
+                </TabsContent>
+                <TabsContent value="contradictions" className="h-full m-0">
+                  <ScrollArea className="h-full pr-3">
+                    <div className="space-y-4">{loading ? Array(3).fill(0).map((_, idx) => (
+                      <Card key={idx} className="glass-tile animate-pulse h-24" />
+                    )) : renderFacts("Contradiction")}</div>
+                  </ScrollArea>
+                </TabsContent>
+                <TabsContent value="takeaways" className="h-full m-0">
+                  <ScrollArea className="h-full pr-3">
+                    <div className="space-y-4">{loading ? Array(3).fill(0).map((_, idx) => (
+                      <Card key={idx} className="glass-tile animate-pulse h-24" />
+                    )) : renderFacts("Takeaway")}</div>
                   </ScrollArea>
                 </TabsContent>
               </div>

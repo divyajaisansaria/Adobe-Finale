@@ -1,15 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-
-interface Fact {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  confidence: number;
-}
+import { spawn } from "child_process";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,33 +9,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ facts: [] }, { status: 400 });
     }
 
-    const prompt = `
-      You are an AI assistant. Generate 3 concise and insightful "Did You Know" facts based on the following text.
-      Return the response strictly as a JSON array with objects containing:
-      id (string), title (string), content (string), category (string), confidence (0-1 float).
+    // Spawn Python process
+    // If insightgenerator.py is in ./python folder
+const pythonProcess = spawn("python3.11", ["./python/insightgenerator.py"]);
 
-      Text:
-      """${text}"""
-    `;
 
-    const response = await genAI.generateContent({
-      model: "models/gemini-2.5-flash",
-      contents: prompt,
-      temperature: 0.7,
-      maxOutputTokens: 500,
+    // Send text via stdin
+    pythonProcess.stdin.write(text);
+    pythonProcess.stdin.end();
+
+    let result = "";
+    let errorOutput = "";
+
+    pythonProcess.stdout.on("data", (data) => {
+      result += data.toString();
     });
 
-    let facts: Fact[] = [];
+    pythonProcess.stderr.on("data", (data) => {
+      errorOutput += data.toString();
+    });
+
+    const exitCode: number = await new Promise((resolve) => {
+      pythonProcess.on("close", resolve);
+    });
+
+    if (exitCode !== 0) {
+      console.error("Python error:", errorOutput);
+      return NextResponse.json({ facts: [] }, { status: 500 });
+    }
+
+    let facts = [];
     try {
-      facts = JSON.parse(response.text) as Fact[];
+      facts = JSON.parse(result);
     } catch (err) {
-      console.error("Failed to parse Gemini response:", err);
+      console.error("Failed to parse Python output:", err);
       facts = [];
     }
 
     return NextResponse.json({ facts });
   } catch (error) {
-    console.error("Error generating insights:", error);
+    console.error("Error in API route:", error);
     return NextResponse.json({ facts: [] }, { status: 500 });
   }
 }
