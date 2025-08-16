@@ -13,7 +13,7 @@ import { Lightbulb } from "lucide-react"
 type NavigationTarget = { page: number; text: string }
 
 export default function MainPage() {
-  const [isModalOpen, setIsModalOpen] = React.useState(false)
+  const [isModalOpen, setIsModalOpen] = React.useState(true)
   const [sources, setSources] = React.useState<FileRecord[]>([])
   const [activeTab, setActiveTab] = React.useState<"sources" | "chat" | "studio">("sources")
   const [selectedFile, setSelectedFile] = React.useState<FileRecord | null>(null)

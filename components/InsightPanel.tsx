@@ -120,12 +120,12 @@ export function InsightPanel({ isOpen, onClose, currentSection, triggerFetch }: 
 
   const panelContent = (
     <div
-      className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+      className={`bg-app fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       onClick={onClose}
     >
       <div
-        className={`glass-card fixed top-0 h-full w-full max-w-2xl transform transition-transform duration-300 ${isOpen ? "translate-x-0 ease-out" : "translate-x-full ease-in"
+        className={`app-bg fixed top-0 h-full w-full max-w-2xl transform transition-transform duration-300 ${isOpen ? "translate-x-0 ease-out" : "translate-x-full ease-in"
           }`}
         style={{ right: 0 }}
         onClick={e => e.stopPropagation()}

@@ -174,8 +174,8 @@ export function CenterIntake({
   }, [navigationTarget])
 
   return (
-    <Card className="glass-card glass-hover flex h-full flex-col rounded-2xl">
-      <div className="border-b border-border px-4 py-2">
+    <Card className="card-hover-glow flex h-full flex-col rounded-2xl">
+      <div className="border-b border-border px-4 ">
         <div className="text-sm font-medium text-foreground">{title}</div>
       </div>
 

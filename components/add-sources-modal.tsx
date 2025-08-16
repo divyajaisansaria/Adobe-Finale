@@ -130,7 +130,7 @@ export function AddSourcesModal({ open, onOpenChange, onUploadComplete }: Props)
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="glass-card glass-hover max-w-2xl w-full border-none bg-white text-black dark:bg-gray-950/90 dark:text-white shadow-2xl sm:rounded-2xl p-0 h-[60vh] md:h-[500px] flex flex-col backdrop-blur-sm"
+        className="card-hover-glow  max-w-2xl w-full border-none  p-0 h-[60vh] md:h-[500px] flex flex-col backdrop-blur-sm"
         onInteractOutside={(e) => {
           if (isUploading) e.preventDefault()
         }}

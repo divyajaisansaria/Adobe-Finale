@@ -51,7 +51,7 @@ export function SourcesPanel({
 
   return (
    <Card
-  className={`glass-card glass-hover  flex h-full min-h-0 flex-col transition-all duration-300 rounded-2xl
+  className={`card-hover-glow flex h-full min-h-0 flex-col transition-all duration-300 rounded-2xl
     ${collapsed ? "w-[56px] p-2" : "w-full p-4 sm:w-[300px] md:w-[350px] lg:w-[400px]"}`}
     >
 
@@ -59,7 +59,7 @@ export function SourcesPanel({
       <div
         className={`flex items-center justify-between border-b border-border ${collapsed ? "pb-2" : "pb-4"}`}
       >
-        {!collapsed && <div className="text-xl font-semibold text-foreground">Sources</div>}
+        {!collapsed && <div className="Geist Mono text-xl ">Sources</div>}
         <div className="ml-auto">
           {collapsed ? (
             <SideNavigationIcon
@@ -131,7 +131,7 @@ export function SourcesPanel({
       ) : (
         // EXPANDED MODE
         <>
-          <div className="my-4 flex items-center gap-2">
+          <div className=" card-hover-glow my-4 flex items-center gap-2">
             <Button
               onClick={onOpenAdd}
               className="h-11 w-full justify-center gap-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
