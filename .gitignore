@@ -14,8 +14,8 @@
 /venv
 venv/
 /.venv
-
+.env.local
 /public/model1
-/public/models_2
+/public/model2
 /python/model_2/models/bge-small-en-v1.5
 /python/model_2/models/cross-encoder-ms-marco
