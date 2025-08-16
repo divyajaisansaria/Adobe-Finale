@@ -20,6 +20,7 @@ export function AddSourcesModal({ open, onOpenChange, onUploadComplete }: Props)
   const [isUploading, setIsUploading] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const fileListRef = React.useRef<HTMLDivElement | null>(null);
+
   const resetState = React.useCallback(() => {
     setFiles([])
     setDragOver(false)
@@ -107,47 +108,42 @@ export function AddSourcesModal({ open, onOpenChange, onUploadComplete }: Props)
         }
       }
 
-      // Notify about successes
       if (successes.length > 0) {
         alert(`${successes.length} file(s) uploaded successfully.`);
       }
 
-      // Notify about failures
       if (failures.length > 0) {
         alert(`${failures.length} file(s) failed to upload. You can retry them.`);
-        setFiles(failures); // Keep only failed files in state for retry
+        setFiles(failures);
       } else {
         resetState();
-        onOpenChange(false); // Close modal only if all succeed
+        onOpenChange(false);
       }
 
-      onUploadComplete(); // Let parent refresh the list
+      onUploadComplete();
 
     } finally {
       setIsUploading(false);
     }
   }
 
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        // The incorrect 'aria-describedby' attribute has been removed from here.
-        className="max-w-2xl w-full border-none bg-gray-950/90 text-white shadow-2xl sm:rounded-2xl p-0 h-[60vh] md:h-[500px] flex flex-col backdrop-blur-sm"
+        className="glass-card glass-hover max-w-2xl w-full border-none bg-white text-black dark:bg-gray-950/90 dark:text-white shadow-2xl sm:rounded-2xl p-0 h-[60vh] md:h-[500px] flex flex-col backdrop-blur-sm"
         onInteractOutside={(e) => {
           if (isUploading) e.preventDefault()
         }}
       >
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-800">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
-            <Folder className="h-6 w-6 text-neutral-400" />
-            {/* FIX 1: The title is now wrapped in the DialogTitle component for accessibility. */}
-            <DialogTitle className="text-xl font-semibold">
-              Add Sources
-            </DialogTitle>
+            <Folder className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
+            <DialogTitle className="text-xl font-semibold ">Add Sources</DialogTitle>
           </div>
         </div>
 
+        {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-8">
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
@@ -157,7 +153,9 @@ export function AddSourcesModal({ open, onOpenChange, onUploadComplete }: Props)
             className={[
               "rounded-xl border-2 border-dashed p-5 text-center transition-all flex flex-col min-h-[220px]",
               isUploading ? "cursor-not-allowed opacity-60" : "cursor-pointer",
-              dragOver ? "border-sky-500 bg-sky-900/40" : "border-gray-700 hover:border-sky-600 bg-gray-900/50",
+              dragOver 
+                ? "border-sky-500 bg-sky-100 dark:bg-sky-900/40" 
+                : "border-gray-300 dark:border-gray-700 hover:border-sky-600 bg-gray-50 dark:bg-gray-900/50",
             ].join(" ")}
             role="button"
             aria-label="Upload PDF files"
@@ -165,31 +163,32 @@ export function AddSourcesModal({ open, onOpenChange, onUploadComplete }: Props)
             {files.length === 0 ? (
               <div className="m-auto flex flex-col items-center justify-center pointer-events-none p-4">
                 <UploadCloud className="h-12 w-12 text-neutral-500" />
-                {/* FIX 2: The instructional text is wrapped in DialogDescription for accessibility. */}
-                <DialogDescription className="mt-4 text-base font-medium text-neutral-300">
+                <DialogDescription className="mt-4 text-base font-medium text-neutral-700 dark:text-neutral-300">
                   Click to upload or drag & drop
                   <p className="mt-2 text-xs text-neutral-500">Supported file type: PDF</p>
                 </DialogDescription>
               </div>
             ) : (
               <div className="flex flex-col h-full w-full text-left">
-                <div className="mb-3 text-sm font-medium text-neutral-300">Your Documents</div>
+                <div className="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Your Documents
+                </div>
                 <div ref={fileListRef} className="flex-1 space-y-2 overflow-y-auto pr-2">
                   {files.map((file, index) => (
                     <div
                       key={`${file.name}-${index}`}
-                      className="flex items-center justify-between bg-gray-800/70 p-2.5 rounded-lg"
+                      className="flex items-center justify-between bg-gray-100 dark:bg-gray-800/70 p-2.5 rounded-lg"
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <FileText className="h-5 w-5 text-sky-400 flex-shrink-0" />
-                        <span className="text-sm text-neutral-200 truncate" title={file.name}>
+                        <FileText className="h-5 w-5 text-sky-500 flex-shrink-0" />
+                        <span className="text-sm text-neutral-800 dark:text-neutral-200 truncate" title={file.name}>
                           {file.name}
                         </span>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); if (!isUploading) handleRemoveFile(index) }}
                         disabled={isUploading}
-                        className="p-1 rounded-full text-neutral-500 hover:text-white hover:bg-gray-700 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-1 rounded-full text-neutral-500 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         aria-label={`Remove ${file.name}`}
                       >
                         <X className="h-4 w-4" />
@@ -201,7 +200,7 @@ export function AddSourcesModal({ open, onOpenChange, onUploadComplete }: Props)
                   type="button"
                   onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
                   disabled={isUploading}
-                  className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-700 text-sky-400 px-4 py-2 text-sm font-medium transition-colors hover:bg-sky-900/40 hover:border-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sky-600 dark:text-sky-400 px-4 py-2 text-sm font-medium transition-colors hover:bg-sky-100 dark:hover:bg-sky-900/40 hover:border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <PlusCircle className="h-4 w-4" />
                   Add More Files
@@ -219,11 +218,12 @@ export function AddSourcesModal({ open, onOpenChange, onUploadComplete }: Props)
           />
         </div>
 
-        <div className="px-6 py-4 flex items-center justify-end border-t border-gray-800 flex-shrink-0">
+        {/* Footer */}
+        <div className="px-6 py-4 flex items-center justify-end border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
           <Button
             onClick={handleSubmit}
             disabled={isUploading || files.length === 0}
-            className="px-8 py-5 text-base rounded-lg bg-sky-600 hover:bg-sky-700 disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all w-[200px] h-[52px]"
+            className="px-8 py-5 text-base rounded-lg bg-sky-600 hover:bg-sky-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all w-[200px] h-[52px] text-white"
           >
             {isUploading ? <Loader2 className="h-6 w-6 animate-spin" /> : "Upload"}
           </Button>

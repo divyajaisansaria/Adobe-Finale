@@ -1,3 +1,4 @@
+// CenterIntake.tsx
 "use client"
 
 import * as React from "react"
@@ -5,7 +6,7 @@ import { useEffect, useMemo, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { UploadCloud, Loader2 } from "lucide-react"
-import { runModel2WithSelection } from "@/lib/model2-client" // ✨ NEW: Imported from your second file
+import { runModel2WithSelection } from "@/lib/model2-client" // ✨ keep
 
 export function CenterIntake({
   title = "Untitled notebook",
@@ -29,7 +30,7 @@ export function CenterIntake({
   const selectedTextRef = useRef<string>("")
   const sdkReadyRef = useRef<boolean>(false)
   const currentFileKeyRef = useRef<string>("")
-  const isRunningRef = useRef(false) // ✨ NEW: Added to prevent multiple backend calls at once
+  const isRunningRef = useRef(false)
 
   const instanceId = useMemo(
     () => `adobe-dc-view-${Math.random().toString(36).slice(2)}`,
@@ -86,7 +87,6 @@ export function CenterIntake({
         }
       )
 
-      // ✨ MERGED: This callback now includes the backend logic
       adobeDCView.registerCallback(
         (window as any).AdobeDC.View.Enum.CallbackType.EVENT_LISTENER,
         (event: any) => {
@@ -98,7 +98,6 @@ export function CenterIntake({
                   selectedTextRef.current = result?.data ?? ""
                   console.log("selectedText =", selectedTextRef.current)
 
-                  // This is the logic from your second file
                   const q = selectedTextRef.current.trim()
                   if (q && !isRunningRef.current) {
                     isRunningRef.current = true
@@ -143,7 +142,7 @@ export function CenterIntake({
     }
   }, [pdfUrl, title, instanceId, hardCleanup, onViewerReady])
 
-  // --- Handle navigation & highlight (This is from your first file) ---
+  // --- Handle navigation & highlight (unchanged) ---
   useEffect(() => {
     if (!navigationTarget || !viewerRef.current || !apisPromiseRef.current) return
     const rawPage = navigationTarget.page
@@ -171,42 +170,45 @@ export function CenterIntake({
   }, [navigationTarget])
 
   return (
-    <Card className="flex h-full flex-col border-white/10 bg-[rgb(27,29,31)]">
-      <div className="border-b border-white/10 px-4 py-2">
-        <div className="text-sm font-medium text-neutral-200">{title}</div>
+    <Card className="glass-card glass-hover flex h-full flex-col rounded-2xl">
+      <div className="border-b border-border px-4 py-2">
+        <div className="text-sm font-medium text-foreground">{title}</div>
       </div>
-      <div className="flex-1 relative overflow-hidden">
+
+      <div className="relative flex-1 overflow-hidden">
         {!pdfUrl ? (
-          <div className="absolute inset-0 flex items-center justify-center text-center px-6">
+          <div className="absolute inset-0 px-6 text-center">
             {!hasSources ? (
-              <div>
-                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/8">
-                  <UploadCloud className="h-5 w-5 text-neutral-300" />
+              <div className="flex h-full flex-col items-center justify-center">
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 ring-1 ring-border/60">
+                  <UploadCloud className="h-5 w-5 text-primary" />
                 </div>
-                <div className="mt-4 text-lg font-medium text-neutral-200">
+                <div className="mt-4 text-lg font-medium text-foreground">
                   Add a source to get started
                 </div>
                 <div className="mt-2">
                   <Button
                     onClick={onOpenAdd}
                     variant="secondary"
-                    className="rounded-full border-white/15 bg-white/5 px-4 py-2 text-[13px] text-neutral-200 hover:bg-white/10"
+                    className="rounded-full"
                   >
                     Upload a source
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="text-lg font-medium text-neutral-400">
-                Select a document from the left panel to view it.
+              <div className="flex h-full items-center justify-center">
+                <div className="text-lg font-medium text-muted-foreground">
+                  Select a document from the left panel to view it.
+                </div>
               </div>
             )}
           </div>
         ) : (
           <>
             {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
-                <Loader2 className="h-8 w-8 animate-spin text-sky-400" />
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             )}
             <div id={instanceId} ref={containerRef} className="h-full w-full" />

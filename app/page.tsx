@@ -8,7 +8,8 @@ import { SiteFooter } from "@/components/site-footer"
 
 export default function Page() {
   return (
-    <div className="flex min-h-[100dvh] flex-col">
+    // The `app-bg` class has been added here
+    <div className="app-bg flex min-h-[100dvh] flex-col">
       <SiteHeader />
       <main className="flex-1">
         <Hero />
