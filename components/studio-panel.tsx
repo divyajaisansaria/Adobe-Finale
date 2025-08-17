@@ -13,6 +13,7 @@ import type { FileRecord } from "@/lib/idb"
 import SideNavigationIcon from '@/assets/icons/side-navigation.svg';
 import PanelCloseIcon from '@/assets/icons/side-navigation.svg';
 import SummaryPanel from './SummaryPanel';
+import PdfChat from "./PdfChat"
 
 type OutlineItem = {
   level: string
@@ -38,7 +39,7 @@ type NavigationTarget = {
 }
 const studioFeatures = [
   { name: "Audio Overview", icon: <AudioLines />, featureKey: "Audio Overview", bgColor: "bg-[#32343d] hover:bg-[#42444d]" },
-  { name: "Video Overview", icon: <Sparkles />, featureKey: "Video Overview", bgColor: "bg-[#303632] hover:bg-[#404642]" },
+  { name: "Ask Anything", icon: <Sparkles />, featureKey: "Ask Anything", bgColor: "bg-[#303632] hover:bg-[#404642]" },
   { name: "Summary", icon: <Brain />, featureKey: "Summary", bgColor: "bg-[#3b3138] hover:bg-[#4b4148]" },
   { name: "Reports", icon: <Highlighter />, featureKey: "Reports", bgColor: "bg-[#3b3b30] hover:bg-[#4b4b40]" },
 ]
@@ -200,100 +201,146 @@ const handleSummary = async () => {
     if (featureKey === "Reports") handleFetchReports();
   }
 
-  const renderScrollableContent = () => {
-    const filteredOutline = outline.filter((item) => item.text && item.text.trim().length >= 5)
+ const renderScrollableContent = () => {
+  const filteredOutline = outline.filter((item) => item.text && item.text.trim().length >= 5)
 
-    // NEW: Reports view — always render list, keep a loader at the bottom while watching
-    if (activeFeature === 'Reports') {
-      return (
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {reportsError && (
-            <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-red-500">
-              <p>⚠️ {reportsError}</p>
-            </div>
-          )}
-
-          {reports.length === 0 && isLoadingReports && (
-            <div className="flex items-center justify-center p-6">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">Waiting for first output…</span>
-            </div>
-          )}
-
-          {reports.length > 0 && (
-            <>
-              {reports.map((report, index) => (
-                <div key={index} className="space-y-4">
-                  <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
-                    {report.source_file}
-                  </h3>
-                  {report.sections.map((section, secIndex) => (
-                    <div key={secIndex} className="bg-muted/20 p-3 rounded-lg text-sm">
-                      <h4 className="font-semibold text-muted-foreground mb-1">{section.section_title}</h4>
-                      <p className="text-foreground/80 whitespace-pre-wrap">{section.refined_text}</p>
-                    </div>
-                  ))}
-                </div>
-              ))}
-
-              {isLoadingReports && (
-                <div className="flex items-center justify-start p-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  <span className="ml-2 text-xs text-muted-foreground">Watching for new outputs…</span>
-                </div>
-              )}
-            </>
-          )}
-
-          {!isLoadingReports && reports.length === 0 && !reportsError && (
-            <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-              <p>No reports found. The Python script may not have run yet.</p>
-            </div>
-          )}
-        </div>
-      )
-    }
-
+  // Reports view
+  if (activeFeature === 'Reports') {
     return (
-      <div className="flex-1 overflow-y-auto p-4">
-        {activeFeature === "Summary" && (
-          <SummaryPanel
-            summary={summary} 
-            isSummarizing={isSummarizing}
-            summaryError={summaryError}
-          />
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {reportsError && (
+          <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-red-500">
+            <p>⚠️ {reportsError}</p>
+          </div>
         )}
 
-        <div>
-          {isLoadingOutline ? (
-            <div className="flex items-center justify-center p-6">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : outlineError ? (
-            <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-              <p>{outlineError}</p>
-            </div>
-          ) : filteredOutline.length > 0 ? (
-            <div className="flex flex-col gap-1">
-              <h3 className="mb-2 px-2 text-md font-semibold text-muted-foreground">Document Outline</h3>
-              {filteredOutline.map((item, index) => (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  className="h-auto w-full justify-start text-left text-foreground hover:bg-accent hover:text-accent-foreground"
-                  style={{ paddingLeft: `${parseInt(item.level.substring(1)) * 0.75}rem` }}
-                  onClick={() => handleGoToPage(item.page, item.text)}
-                >
-                  <span className="truncate">{item.text}</span>
-                </Button>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        {reports.length === 0 && isLoadingReports && (
+          <div className="flex items-center justify-center p-6">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-sm text-muted-foreground">Waiting for first output…</span>
+          </div>
+        )}
 
+        {reports.length > 0 && (
+          <>
+            {reports.map((report, index) => (
+              <div key={index} className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
+                  {report.source_file}
+                </h3>
+                {report.sections.map((section, secIndex) => (
+                  <div key={secIndex} className="bg-muted/20 p-3 rounded-lg text-sm">
+                    <h4 className="font-semibold text-muted-foreground mb-1">{section.section_title}</h4>
+                    <p className="text-foreground/80 whitespace-pre-wrap">{section.refined_text}</p>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {isLoadingReports && (
+              <div className="flex items-center justify-start p-2">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-xs text-muted-foreground">Watching for new outputs…</span>
+              </div>
+            )}
+          </>
+        )}
+
+        {!isLoadingReports && reports.length === 0 && !reportsError && (
+          <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+            <p>No reports found. The Python script may not have run yet.</p>
+          </div>
+        )}
       </div>
     )
   }
+
+  // Summary view
+  if (activeFeature === "Summary") {
+    return (
+      <div className="flex-1 overflow-y-auto p-4">
+        {summaryError && <p className="mt-3 text-sm text-red-500">{summaryError}</p>}
+
+        <div className="mt-4 text-sm text-foreground">
+          {isSummarizing ? (
+            <p>Generating summary, please wait...</p>
+          ) : summary ? (
+            <div className="space-y-4">
+              {summary
+                .split("\n\n")
+                .map((paragraph, idx) => {
+                  const headingMatch = paragraph.match(/\*\*(.+?)\*\*/)
+                  const heading = headingMatch ? headingMatch[1] : null
+                  const text = paragraph.replace(/\*\*(.+?)\*\*/g, "").trim()
+                  const bullets = text
+                    .split("\n")
+                    .map((line) => line.trim())
+                    .filter((line) => line.length > 0)
+
+                  return (
+                    <div key={idx}>
+                      {heading && <h4 className="font-semibold mb-1">{heading}</h4>}
+                      {bullets.length > 0 && (
+                        <ul className="list-disc list-inside space-y-1">
+                          {bullets.map((bullet, i) => (
+                            <li key={i}>{bullet}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )
+                })}
+            </div>
+          ) : (
+            <p>Summary will appear here automatically.</p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Ask Anything (PdfChat) view
+  if (activeFeature === "Ask Anything" && selectedFile) {
+    return (
+      <div className="flex-1 overflow-y-auto p-4">
+        <PdfChat pdfUrl={selectedFile.url} />
+      </div>
+    )
+  }
+
+  // Outline view (default)
+  return (
+    <div className="flex-1 overflow-y-auto p-4">
+      {isLoadingOutline ? (
+        <div className="flex items-center justify-center p-6">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : outlineError ? (
+        <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+          <p>{outlineError}</p>
+        </div>
+      ) : filteredOutline.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          <h3 className="mb-2 px-2 text-md font-semibold text-muted-foreground">
+            Document Outline
+          </h3>
+          {filteredOutline.map((item, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              className="h-auto w-full justify-start text-left text-foreground hover:bg-accent hover:text-accent-foreground"
+              style={{ paddingLeft: `${parseInt(item.level.substring(1)) * 0.75}rem` }}
+              onClick={() => handleGoToPage(item.page, item.text)}
+            >
+              <span className="truncate">{item.text}</span>
+            </Button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 
   return (
     <Card
