@@ -18,3 +18,4 @@ huggingface-hub==0.24.6
 sentence-transformers==2.6.1
 google-generativeai 
 python-dotenv
+google.genai
