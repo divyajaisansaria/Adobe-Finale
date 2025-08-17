@@ -53,7 +53,7 @@ Instructions:
 3. Use short, readable paragraphs — do NOT use bullet points.
 4. Focus only on the most important information (key achievements, skills, outcomes, highlights).
 5. Avoid repeating any content.
-6. Limit the summary to about 200 words per chunk.
+6. Limit the summary to about 200 words in total.
 7. Output plain text only — do NOT return JSON or markup.
 """
     response = client.models.generate_content(

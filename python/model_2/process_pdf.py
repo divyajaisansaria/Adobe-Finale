@@ -1,5 +1,6 @@
 # process_pdf.py — CPU-only, offline PDF recommender (selected-text query mode, normalized scoring).
-# Writes a per-PDF "<name>_output.json" after each PDF.
+# Writes a per-TITLE "<PDFName>__<Title>_<ordinal>.json" after each selected section of each PDF.
+# (e.g., _first for the top section of that PDF, _second for the next, etc.)
 # No persona/job/timestamp in outputs. Minimal console output (only errors + final summary).
 
 import os
@@ -52,6 +53,10 @@ def read_json(path):
 
 def sanitize_filename(fname):
     return re.sub(r"[^0-9A-Za-z._-]", "_", fname)
+
+def _shorten_filename_component(s, max_len=60):
+    s = sanitize_filename(s or "section")
+    return s[:max_len].rstrip("_-.")
 
 def clean_output_dir(output_dir):
     if not os.path.isdir(output_dir): return
@@ -433,7 +438,7 @@ class MultiQueryRanker:
         return final
 
 # --------------------------
-# Per-PDF processing (writes per-PDF file immediately)
+# Per-PDF processing (now writes per-SECTION files immediately)
 # --------------------------
 def process_single_pdf(pdf_path, file_name, ranker, persona, task, output_dir,
                        top_k=5, min_words=8,
@@ -470,18 +475,33 @@ def process_single_pdf(pdf_path, file_name, ranker, persona, task, output_dir,
     if not cleaned:
         return None
 
-    per_pdf_result = {
-        "metadata": {
-            "source_file": file_name,
-            "query": query or ""
-        },
-        "extracted_sections": format_extracted_sections(cleaned)
-    }
+    base_pdf_name = _shorten_filename_component(os.path.splitext(file_name)[0])
+    ordinals = ["first","second","third","fourth","fifth","sixth","seventh","eighth","ninth","tenth"]
 
-    out_name = sanitize_filename(os.path.splitext(file_name)[0]) + "_output.json"
-    out_path = os.path.join(output_dir, out_name)
-    atomic_write_json(per_pdf_result, out_path)
-    return per_pdf_result
+    results = []
+    for idx, section in enumerate(cleaned):
+        per_section_result = {
+            "metadata": {
+                "source_file": file_name,
+                "query": query or ""
+            },
+            "extracted_sections": format_extracted_sections([{
+                "document": section["document"],
+                "title": section["title"],
+                "text": section["text"],
+                "page": section["page"]
+            }])
+        }
+
+        # filename: PDFName_first.json, PDFName_second.json, ...
+        suffix = f"_{ordinals[idx]}" if idx < len(ordinals) else f"_{idx+1}"
+        out_name = f"{base_pdf_name}{suffix}.json"
+        out_path = os.path.join(output_dir, out_name)
+        atomic_write_json(per_section_result, out_path)
+        results.append(per_section_result)
+
+
+    return results if results else None
 
 # --------------------------
 # Main
@@ -508,9 +528,9 @@ def main(input_dir, output_dir, model_dir,
     clean_output_dir(output_dir)
 
     if not os.path.exists(input_json_path):
-        print(f"❌ Error: 'input.json' not found in '{input_dir}'."); return
+        print(f"Error: 'input.json' not found in '{input_dir}'."); return
     if not os.path.isdir(pdfs_dir):
-        print(f"❌ Error: 'PDFs' directory not found in '{input_dir}'."); return
+        print(f"Error: 'PDFs' directory not found in '{input_dir}'."); return
 
     try:
         input_data = read_json(input_json_path)
@@ -524,7 +544,7 @@ def main(input_dir, output_dir, model_dir,
             quantize_int8=quantize_int8
         )
     except Exception as e:
-        print(f"❌ Error during initialization: {e}")
+        print(f"Error during initialization: {e}")
         return
 
     pdf_files = [f for f in os.listdir(pdfs_dir) if f.lower().endswith(".pdf")]
@@ -576,7 +596,7 @@ def main(input_dir, output_dir, model_dir,
     else:
         selected_docs = filtered_pdf_files[: (max_docs or len(filtered_pdf_files))]
 
-    # Process PDFs one by one, writing each per-PDF file immediately
+    # Process PDFs one by one, writing each per-SECTION file immediately
     for fname in selected_docs:
         try:
             process_single_pdf(
@@ -595,12 +615,12 @@ def main(input_dir, output_dir, model_dir,
             pass
 
     # Final summary file creation is disabled.
-    print(f"✅ Done. Per-PDF outputs written to: {output_dir}")
+    print(f"Done. Per-section outputs written to: {output_dir}")
     print(f"SAVED_DIR::{output_dir}", flush=True)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CPU-only, offline PDF recommender — per-PDF outputs.")
+    parser = argparse.ArgumentParser(description="CPU-only, offline PDF recommender — per-section outputs.")
     parser.add_argument("input_dir", help="Directory containing 'input.json' and the 'PDFs' folder.")
     parser.add_argument("output_dir", help="Directory where outputs will be saved.")
     parser.add_argument("model_dir", help="Directory containing local model folders.")
