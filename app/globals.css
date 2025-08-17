@@ -140,13 +140,13 @@ html.dark .gradient-text-rb {
   }
 }
 .glass-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-stroke);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 18px;
-  box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: blur(4px) saturate(160%);
-  backdrop-filter: blur(4px) saturate(160%);
-  overflow: clip; /* clean clipped edges on shadows/children */
+  box-shadow: var(--shadow);
+  /* -webkit-backdrop-filter: blur(4px) saturate(160%);
+  backdrop-filter: blur(4px) saturate(160%); */
+  /* overflow: clip;  */
 }
 
 /* faint inner highlight for “real glass” edge */
@@ -156,7 +156,7 @@ html.dark .gradient-text-rb {
   border-radius: inherit;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.04) 40%, transparent 60%) ;
+    linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.04) 40%,) ;
   mix-blend-mode: screen;
   opacity: .65;
 }
@@ -195,10 +195,8 @@ html.dark .glass-divider {
 
 /* Buttons/tiles inside glass — keep them flatter */
 .glass-tile {
-  background: rgba(255,255,255,0.18);
-  -webkit-backdrop-filter: blur(4px) saturate(150%);
-  backdrop-filter: blur(4px) saturate(150%);
-  border: 1px solid rgba(255,255,255,0.32);
+  background: var(--secondary);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 html.dark .glass-tile {

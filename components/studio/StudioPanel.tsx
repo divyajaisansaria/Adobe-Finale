@@ -114,7 +114,7 @@ export function StudioPanel({
       className={`card-hover-glow flex h-full flex-col transition-all duration-300 rounded-2xl
       ${collapsed ? "w-[56px]" : "w-full sm:w-[300px] md:w-[350px] lg:w-[400px]"}`}
     >
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
+      <div className="flex items-center justify-between border-b border-white/10 px-4">
         <div>
           {!collapsed && activeFeature ? (
             <ChevronLeft
