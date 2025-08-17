@@ -130,13 +130,13 @@ export function AddSourcesModal({ open, onOpenChange, onUploadComplete }: Props)
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-2xl w-full border-none  p-0 h-[60vh] md:h-[500px] flex flex-col backdrop-blur-sm"
+        className="max-w-2xl w-full border-none  p-0 h-[60vh] md:h-[500px] flex flex-col bg-card"
         onInteractOutside={(e) => {
           if (isUploading) e.preventDefault()
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+        <div className=" flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <Folder className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
             <DialogTitle className="text-xl font-semibold ">Add Sources</DialogTitle>

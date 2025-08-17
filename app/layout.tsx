@@ -4,13 +4,12 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import Script from 'next/script'
 import { ThemeProvider } from '@/components/theme-provider'
-
+import { ScrollRestoration } from '@/components/effects'
 export const metadata: Metadata = {
   title: 'Pdf',
   description: 'Created with love',
   generator: 'shashank',
 }
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -34,6 +33,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <ScrollRestoration />
         <Script src="https://acrobatservices.adobe.com/view-sdk/viewer.js" strategy="afterInteractive" />
       </body>
     </html>

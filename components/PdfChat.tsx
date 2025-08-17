@@ -62,11 +62,11 @@ export default function PdfChat({ pdfUrl }: { pdfUrl: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full w-full rounded-lg bg-black border border-gray-800 p-3">
+    <div className="bg-[#212530] card flex flex-col h-full w-full rounded-lg  border border-neutral-700 p-3">
       {/* Chat messages */}
       <div
         ref={scrollRef}
-        className="flex flex-col-reverse overflow-y-auto mb-2 space-y-3 p-2 scroll-smooth"
+        className="flex flex-col overflow-y-auto mb-2 space-y-3 p-2 scroll-smooth"
         style={{ flexGrow: 1 }}
       >
         {messages.map((msg, idx) => (
@@ -77,8 +77,8 @@ export default function PdfChat({ pdfUrl }: { pdfUrl: string }) {
             <div
               className={`relative max-w-[75%] px-4 py-2 rounded-2xl break-words
                 ${msg.type === "user"
-                  ? "bg-gray-700 text-white rounded-br-none"
-                  : "bg-gray-800 text-gray-300 rounded-bl-none"
+                  ? "bg-blue-900 text-white rounded-br-none"
+                  : "bg-neutral-200 text-neutral-800 rounded-bl-none"
                 }`}
             >
               {msg.content}

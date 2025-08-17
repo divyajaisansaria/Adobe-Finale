@@ -1,7 +1,7 @@
 // sources-panel.tsx
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
@@ -48,7 +48,12 @@ export function SourcesPanel({
     }
     return <FileText className={`${className} text-muted-foreground`} />
   }
-
+    useEffect(() => {
+    if (sources && sources.length > 0) {
+      const lastFile = sources[sources.length - 1]
+      handleSelect(lastFile)
+    }
+  }, [sources])
   return (
    <Card
   className={`card-hover-glow flex h-full min-h-0 flex-col transition-all duration-300 rounded-2xl
@@ -165,7 +170,7 @@ export function SourcesPanel({
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         {getFileIcon(file.name, "small")}
-                        <span className="max-w-[200px] truncate text-sm text-foreground" title={file.name}>
+                        <span className="max-w-[300px] truncate text-sm text-foreground" title={file.name}>
                           {file.name}
                         </span>
                       </div>

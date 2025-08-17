@@ -194,7 +194,7 @@ function FeaturesStackedGrid({
   const rows = React.useMemo(() => chunk(features, cols), [features, cols])
 
   return (
-    <section id="features" className="py-10 md:py-14">
+    <section id="features" className="relative py-10 md:py-14">
       <div className="container mx-auto max-w-6xl px-4">
         <header className="mb-8 text-center">
           <h2 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">

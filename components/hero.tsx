@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 
 export function Hero(): JSX.Element {
   return (
-    <section className="cd-hero relative min-h-screen overflow-hidden isolate">
+    <section className="cd-hero min-h-screen overflow-hidden isolate">
       {/* Background layers */}
       <div className="cd-hero__grid pointer-events-none absolute inset-0" aria-hidden />
       <div className="cd-hero__stars cd-hero__stars--far pointer-events-none absolute inset-0" aria-hidden />

@@ -7,7 +7,7 @@ if [ ! -d "venv" ]; then
 fi
 
 # 2️⃣ Activate venv
-source .venv/bin/activate
+source venv/bin/activate
 
 # 3️⃣ Upgrade pip
 pip install --upgrade pip

@@ -40,7 +40,7 @@
 
 /* ---- Design tokens (dark) ---- */
 .dark {
-  --background: #0000;
+  --background: black;
   --foreground: oklch(0.97 0 0);
   --card: #21252b;
   --card-foreground: oklch(0.97 0 0);

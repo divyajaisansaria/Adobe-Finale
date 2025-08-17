@@ -32,14 +32,18 @@ const studioFeatures = [
   { name: "Audio Overview", icon: <AudioLines />, featureKey: "Audio Overview", bgColor: "bg-[#32343d] hover:bg-[#42444d]" },
   { name: "Ask Anything", icon: <Sparkles />, featureKey: "Ask Anything", bgColor: "bg-[#303632] hover:bg-[#404642]" },
   { name: "Summary", icon: <Brain />, featureKey: "Summary", bgColor: "bg-[#3b3138] hover:bg-[#4b4148]" },
-  { name: "Reports", icon: <Highlighter />, featureKey: "Reports", bgColor: "bg-[#3b3b30] hover:bg-[#4b4b40]" },
+  { name: "Relevant Section", icon: <Highlighter />, featureKey: "Reports", bgColor: "bg-[#3b3b30] hover:bg-[#4b4b40]" },
 ] as const
 
 export function StudioPanel({
   selectedFile,
+  isReportsLoading,
+  onReportsLoadingChange,
   onNavigateRequest,
 }: {
   selectedFile: FileRecord | null
+  isReportsLoading: boolean
+  onReportsLoadingChange: (isLoading: boolean) => void
   onNavigateRequest: (target: NavigationTarget) => void
 }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -77,12 +81,12 @@ export function StudioPanel({
   // ------------------------------------------------------
 
   // Reports spinner state (child toggles via callback)
-  const [isReportsLoading, setIsReportsLoading] = useState(false)
+  // const [isReportsLoading, setIsReportsLoading] = useState(false)
 
   const renderScrollableContent = () => {
     switch (activeFeature) {
       case "Reports":
-        return <ReportsPanel onLoadingChange={setIsReportsLoading} />
+        return <ReportsPanel onLoadingChange={onReportsLoadingChange} />
       case "Summary":
         return (
           <div className="flex-1 overflow-y-auto p-4">
