@@ -7,7 +7,7 @@ import { FeaturesExact } from "@/components/feature-cards"
 import { Showcase } from "@/components/showcase"
 import { FAQ } from "@/components/faq"
 import { SiteFooter } from "@/components/site-footer"
-import { Loader } from "@/components/ui/loader"
+import  Loader from "@/components/ui/loader"
 
 export default function Page() {
   // 3. Set up the loading state
@@ -26,7 +26,7 @@ export default function Page() {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader label="Loading your files..." size={120} />
+        <Loader label="" size={120} />
       </div>
     );
   }
