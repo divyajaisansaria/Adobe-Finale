@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/Button"
+import { Button } from "@/components/ui/button"
 import { Loader2, ChevronLeft, Brain, Highlighter, Sparkles, AudioLines } from "lucide-react"
 import {
   Tooltip,
@@ -12,6 +12,7 @@ import {
 import type { FileRecord } from "@/lib/idb"
 import SideNavigationIcon from '@/assets/icons/side-navigation.svg';
 import PanelCloseIcon from '@/assets/icons/side-navigation.svg';
+import SummaryPanel from './SummaryPanel';
 
 type OutlineItem = {
   level: string
@@ -35,7 +36,6 @@ type NavigationTarget = {
   page: number
   text: string
 }
-
 const studioFeatures = [
   { name: "Audio Overview", icon: <AudioLines />, featureKey: "Audio Overview", bgColor: "bg-[#32343d] hover:bg-[#42444d]" },
   { name: "Video Overview", icon: <Sparkles />, featureKey: "Video Overview", bgColor: "bg-[#303632] hover:bg-[#404642]" },
@@ -52,14 +52,14 @@ export function StudioPanel({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [activeFeature, setActiveFeature] = useState<string | null>(null)
-  
+
   // States for Document Outline
   const [outline, setOutline] = useState<OutlineItem[]>([])
   const [isLoadingOutline, setIsLoadingOutline] = useState(false)
   const [outlineError, setOutlineError] = useState<string | null>(null)
 
   // States for Summary
-  const [summary, setSummary] = useState<string | null>(null)
+  const [summary, setSummary] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
 
@@ -67,6 +67,7 @@ export function StudioPanel({
   const [reports, setReports] = useState<ReportFile[]>([])
   const [isLoadingReports, setIsLoadingReports] = useState(false)
   const [reportsError, setReportsError] = useState<string | null>(null)
+
 
   // Outline fetch logic
   useEffect(() => {
@@ -113,31 +114,38 @@ export function StudioPanel({
     onNavigateRequest({ page: pageNumber + 1, text })
   }
 
-  const handleSummary = async () => {
-    if (!selectedFile?.url) {
-      setSummaryError("⚠️ No PDF URL available.")
-      return
-    }
-
-    setIsSummarizing(true)
-    setSummary("")
-    setSummaryError(null)
-
-    try {
-      const response = await fetch("/api/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfUrl: selectedFile.url }),
-      })
-
-      const data = await response.json()
-      setSummary(data.summary || "⚠️ No summary generated.")
-    } catch (err: any) {
-      setSummaryError("❌ Error generating summary.")
-    } finally {
-      setIsSummarizing(false)
-    }
+const handleSummary = async () => {
+  if (!selectedFile?.url) {
+    setSummaryError("⚠️ No PDF URL available.");
+    return;
   }
+
+  setIsSummarizing(true);
+  setSummary(null);
+  setSummaryError(null);
+
+  try {
+    const response = await fetch("/api/summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pdfUrl: selectedFile.url }),
+    });
+
+    // Use text() to get plain string
+    const plainText = await response.text();
+
+    // Directly set the plain text
+    setSummary(plainText);
+  } catch (err: any) {
+    setSummaryError("❌ Error generating summary.");
+  } finally {
+    setIsSummarizing(false);
+  }
+};
+
+
+
+
 
   // ✅ UPDATED: Polling logic for reports (append as they come; keep loader running under the list)
   const handleFetchReports = async () => {
@@ -248,76 +256,41 @@ export function StudioPanel({
 
     return (
       <div className="flex-1 overflow-y-auto p-4">
-        {activeFeature === "Summary" ? (
-          <div>
-            {summaryError && (
-              <p className="mt-3 text-sm text-red-500">{summaryError}</p>
-            )}
-
-            <div className="mt-4 text-sm text-foreground">
-              {isSummarizing ? (
-                <p>Generating summary, please wait...</p>
-              ) : summary ? (
-                <div className="space-y-4">
-                  {summary
-                    .split("\n\n")
-                    .map((paragraph, idx) => {
-                      const headingMatch = paragraph.match(/\*\*(.+?)\*\*/);
-                      const heading = headingMatch ? headingMatch[1] : null;
-                      const text = paragraph.replace(/\*\*(.+?)\*\*/g, "").trim();
-                      const bullets = text
-                        .split("\n")
-                        .map((line) => line.trim())
-                        .filter((line) => line.length > 0);
-
-                      return (
-                        <div key={idx}>
-                          {heading && <h4 className="font-semibold mb-1">{heading}</h4>}
-                          {bullets.length > 0 && (
-                            <ul className="list-disc list-inside space-y-1">
-                              {bullets.map((bullet, i) => (
-                                <li key={i}>{bullet}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              ) : (
-                <p>Summary will appear here automatically.</p>
-              )}
-            </div>
-
-          </div>
-        ) : (
-          <div>
-            {isLoadingOutline ? (
-              <div className="flex items-center justify-center p-6">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : outlineError ? (
-              <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                <p>{outlineError}</p>
-              </div>
-            ) : filteredOutline.length > 0 ? (
-              <div className="flex flex-col gap-1">
-                <h3 className="mb-2 px-2 text-md font-semibold text-muted-foreground">Document Outline</h3>
-                {filteredOutline.map((item, index) => (
-                  <Button
-                    key={index}
-                    variant="ghost"
-                    className="h-auto w-full justify-start text-left text-foreground hover:bg-accent hover:text-accent-foreground"
-                    style={{ paddingLeft: `${parseInt(item.level.substring(1)) * 0.75}rem` }}
-                    onClick={() => handleGoToPage(item.page, item.text)}
-                  >
-                    <span className="truncate">{item.text}</span>
-                  </Button>
-                ))}
-              </div>
-            ) : null}
-          </div>
+        {activeFeature === "Summary" && (
+          <SummaryPanel
+            summary={summary} 
+            isSummarizing={isSummarizing}
+            summaryError={summaryError}
+          />
         )}
+
+        <div>
+          {isLoadingOutline ? (
+            <div className="flex items-center justify-center p-6">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : outlineError ? (
+            <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+              <p>{outlineError}</p>
+            </div>
+          ) : filteredOutline.length > 0 ? (
+            <div className="flex flex-col gap-1">
+              <h3 className="mb-2 px-2 text-md font-semibold text-muted-foreground">Document Outline</h3>
+              {filteredOutline.map((item, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className="h-auto w-full justify-start text-left text-foreground hover:bg-accent hover:text-accent-foreground"
+                  style={{ paddingLeft: `${parseInt(item.level.substring(1)) * 0.75}rem` }}
+                  onClick={() => handleGoToPage(item.page, item.text)}
+                >
+                  <span className="truncate">{item.text}</span>
+                </Button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
       </div>
     )
   }
@@ -399,7 +372,7 @@ export function StudioPanel({
               ))}
             </div>
           </div>
-          
+
           {renderScrollableContent()}
         </>
       )}
@@ -438,13 +411,13 @@ function FeatureTile({
             pointer-events-none"
         />
       )}
-      
+
       <div className="relative z-20">
         {React.cloneElement(icon as React.ReactElement, {
           className: `h-5 w-5 text-white/80`
         })}
       </div>
-      
+
       <span className="relative z-20 text-sm font-medium">{label}</span>
     </div>
   )

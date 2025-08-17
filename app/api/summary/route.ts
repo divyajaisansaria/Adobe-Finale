@@ -1,40 +1,45 @@
-// app/api/summary/route.ts
-import { NextResponse } from "next/server"
-import { execFile } from "child_process"
-import path from "path"
+import { NextResponse } from "next/server";
+import { spawn } from "child_process";
+import path from "path";
 
 export async function POST(req: Request) {
   try {
-    const { pdfUrl } = await req.json()
+    const { pdfUrl } = await req.json();
+
     if (!pdfUrl) {
-      return NextResponse.json({ error: "Missing pdfUrl" }, { status: 400 })
+      return NextResponse.json({ summary: "PDF URL not provided." }, { status: 400 });
     }
 
-    // Path to your Python script
-    const scriptPath = path.join(process.cwd(), "python_scripts", "summarygenerator.py")
+    const scriptPath = path.join(process.cwd(), "python", "summarygenerator.py");
+    const pythonCmd = process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
 
-    // Call Python 3.11
     const summary: string = await new Promise((resolve, reject) => {
-      execFile(
-        "python3.11",
-        [scriptPath, pdfUrl], // pass pdfUrl as argument
-        { encoding: "utf-8" },
-        (error, stdout, stderr) => {
-          if (error) {
-            console.error("Python error:", stderr)
-            return reject(error)
-          }
-          resolve(stdout.trim())
-        }
-      )
-    })
+      const pyProcess = spawn(pythonCmd, [scriptPath, pdfUrl]);
 
-    return NextResponse.json({ summary })
+      let stdout = "";
+      let stderr = "";
+
+      pyProcess.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      pyProcess.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      pyProcess.on("close", (code) => {
+        if (code !== 0) {
+          return reject(new Error(stderr || "Python process failed"));
+        }
+        resolve(stdout.trim());
+      });
+    });
+
+    return new Response(summary, { headers: { "Content-Type": "text/plain" } });
   } catch (err: any) {
-    console.error("Summary API error:", err)
     return NextResponse.json(
-      { error: "Failed to generate summary" },
+      { summary: `Error: ${err.message || "Failed to generate summary."}` },
       { status: 500 }
-    )
+    );
   }
 }
