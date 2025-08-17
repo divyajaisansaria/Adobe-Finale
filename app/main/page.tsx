@@ -9,6 +9,7 @@ import { getAllFileRecords, deleteFileRecord, type FileRecord } from "@/lib/idb"
 import { Button } from "@/components/ui/button"
 import { InsightPanel } from "@/components/InsightPanel"
 import { Lightbulb } from "lucide-react"
+import { Loader } from "@/components/ui/loader"
 
 type NavigationTarget = { page: number; text: string }
 
@@ -20,7 +21,7 @@ export default function MainPage() {
   const [navigationQueue, setNavigationQueue] = React.useState<NavigationTarget | null>(null)
   const [isViewerReady, setIsViewerReady] = React.useState(false)
   const [currentSelection, setCurrentSelection] = React.useState<string>("")
-
+  const [showLoader, setShowLoader] = React.useState(false)
   // Insight panel state
   const [isInsightPanelOpen, setIsInsightPanelOpen] = React.useState(false)
   const [triggerFetch, setTriggerFetch] = React.useState(false)
@@ -51,9 +52,14 @@ export default function MainPage() {
   }
 
   const hasSources = sources.length > 0
-
+  
   return (
     <div className="app-bg flex h-screen flex-col overflow-hidden bg-background text-foreground">
+      {showLoader && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <Loader />
+        </div>
+      )}
       <AddSourcesModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}

@@ -11,7 +11,7 @@ type LoaderProps = {
   className?: string; 
 };
 
-export default function Loader({ size = 80, label, className }: LoaderProps) {
+export function Loader({ size = 80, label, className }: LoaderProps) {
   return (
     <div
       role="status"
