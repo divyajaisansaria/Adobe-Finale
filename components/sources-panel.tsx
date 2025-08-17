@@ -63,7 +63,7 @@ export function SourcesPanel({
         <div className="ml-auto">
           {collapsed ? (
             <SideNavigationIcon
-              className="h-6 w-6 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
+              className="h-6 w-6 mt-5 mr-1 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
               onClick={() => setCollapsed(false)}
             />
           ) : (

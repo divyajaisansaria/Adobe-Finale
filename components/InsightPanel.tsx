@@ -95,7 +95,7 @@ export function InsightPanel({ isOpen, onClose, currentSection, triggerFetch }: 
     return filtered.map(fact => (
       <Card
         key={fact.id}
-        className={`glass-tile glass-hover ${speakingText === fact.content ? "ring-2 ring-yellow-400" : ""}`}
+        className={`glass-tile glass-hover ${speakingText === fact.content ? "" : ""}`}
       >
         <CardHeader className="pb-3 flex justify-between items-start">
           <div className="flex items-center space-x-2">
