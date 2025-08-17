@@ -1,79 +1,158 @@
+// components/studio/ReportsPanel.tsx
 "use client"
 
 import * as React from "react"
 import { useEffect, useRef, useState } from "react"
 import { Loader2 } from "lucide-react"
 import type { ReportFile } from "./types"
+import { onNewRun } from "@/lib/reportBus"
 
 export function ReportsPanel({
   onLoadingChange,
   pollDurationSec = 50,
-  maxReports = 3,
 }: {
   onLoadingChange?: (loading: boolean) => void
   pollDurationSec?: number
-  maxReports?: number
 }) {
   const [reports, setReports] = useState<ReportFile[]>([])
   const [isLoadingReports, setIsLoadingReports] = useState(false)
   const [reportsError, setReportsError] = useState<string | null>(null)
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    let knownFiles: string[] = []
-    let count = 0
-    const start = Date.now()
+  // Track what we've already seen / state for the current cycle
+  const knownFilesRef = useRef<string[]>([])
+  const startRef = useRef<number>(0)
+  const cycleIdRef = useRef<number>(0)              // invalidate older polling cycles
+  const sawRunningRef = useRef<boolean>(false)      // becomes true once API reports running=true
+  const idleStrikesRef = useRef<number>(0)          // counts consecutive polls where running=false
+  const endedRef = useRef<boolean>(false)           // marks that a cycle actually ended (for empty UI)
 
-    const startPolling = () => {
-      setIsLoadingReports(true)
-      setReportsError(null)
-      setReports([])
-      onLoadingChange?.(true)
+  // Tunables
+  const POLL_MS = 2000
+  const MAX_IDLE_STRIKES = 5                        // ~10s (5 * 2s) grace before declaring "no run"
 
-      const poll = async () => {
-        try {
-          const params = new URLSearchParams({ known: knownFiles.join(",") })
-          const res = await fetch(`/api/reports?${params}`)
-          if (!res.ok) throw new Error("Failed to fetch reports")
-          const data = await res.json()
+  const stopPolling = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    intervalRef.current = null
+    if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current)
+    startTimeoutRef.current = null
+    setIsLoadingReports(false)
+    onLoadingChange?.(false)
+    endedRef.current = true
+  }
 
-          if (data.newReports?.length) {
-            setReports((prev) => {
-              const prevJson = JSON.stringify(prev)
-              const toAppend = data.newReports.filter(
-                (r: ReportFile) => !prevJson.includes(JSON.stringify(r))
-              )
-              return toAppend.length ? [...prev, ...toAppend] : prev
-            })
+  const resetState = () => {
+    cycleIdRef.current += 1
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    intervalRef.current = null
+    if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current)
+    startTimeoutRef.current = null
 
-            knownFiles = [...knownFiles, ...(data.newFiles || [])]
-            count += data.newReports.length
-          }
+    knownFilesRef.current = []
+    startRef.current = Date.now()
+    sawRunningRef.current = false
+    idleStrikesRef.current = 0
+    endedRef.current = false
 
-          const elapsed = (Date.now() - start) / 1000
-          if (elapsed >= pollDurationSec || count >= maxReports) {
-            if (intervalRef.current) clearInterval(intervalRef.current)
-            setIsLoadingReports(false)
-            onLoadingChange?.(false)
-          }
-        } catch (err: any) {
-          setReportsError(err.message || "Polling error")
-          if (intervalRef.current) clearInterval(intervalRef.current)
-          setIsLoadingReports(false)
-          onLoadingChange?.(false)
+    setReports([])
+    setReportsError(null)
+    setIsLoadingReports(true)
+    onLoadingChange?.(true)
+  }
+
+  const startPolling = (delayMs: number = 0) => {
+    resetState()
+    const myCycle = cycleIdRef.current
+
+    const poll = async () => {
+      if (myCycle !== cycleIdRef.current) return
+
+      try {
+        const params = new URLSearchParams({ known: knownFilesRef.current.join(",") })
+        const res = await fetch(`/api/reports?${params}`, { method: "GET" })
+        if (!res.ok) throw new Error("Failed to fetch reports")
+        const data: { newReports?: ReportFile[]; newFiles?: string[]; running?: boolean } = await res.json()
+
+        const newReports = data.newReports ?? []
+        const newFiles = data.newFiles ?? []
+        const running = !!data.running
+
+        // Track running/idle state across polls
+        if (running) {
+          sawRunningRef.current = true
+          idleStrikesRef.current = 0
+        } else {
+          idleStrikesRef.current += 1
         }
-      }
 
-      intervalRef.current = setInterval(poll, 2000)
-      poll()
+        // Append any brand-new reports we haven't shown yet
+        if (newReports.length) {
+          setReports((prev) => {
+            const prevJson = JSON.stringify(prev)
+            const toAppend = newReports.filter((r) => !prevJson.includes(JSON.stringify(r)))
+            if (toAppend.length) {
+              // Mark cycle as ongoing (not ended)
+              endedRef.current = false
+              return [...prev, ...toAppend]
+            }
+            return prev
+          })
+          if (newFiles.length) {
+            knownFilesRef.current = [...knownFilesRef.current, ...newFiles]
+          }
+        }
+
+        // Decide when to stop:
+        // - Hard timeout
+        // - We've seen running previously and now it's not running anymore (job ended)
+        // - Or we've been idle for a while at the start (grace for back-end to flip to running)
+        const elapsed = (Date.now() - startRef.current) / 1000
+        const timeUp = elapsed >= pollDurationSec
+        const jobEnded = sawRunningRef.current && !running
+        const idleTooLongInitially = !sawRunningRef.current && idleStrikesRef.current >= MAX_IDLE_STRIKES
+
+        if (timeUp || jobEnded || idleTooLongInitially) {
+          stopPolling()
+        }
+      } catch (err: any) {
+        setReportsError(err.message || "Polling error")
+        stopPolling()
+      }
     }
 
-    startPolling()
+    // Start after an optional initial delay (to let your backend clear/create the output dir)
+    if (delayMs > 0) {
+      startTimeoutRef.current = setTimeout(() => {
+        if (myCycle !== cycleIdRef.current) return
+        intervalRef.current = setInterval(poll, POLL_MS)
+        void poll()
+      }, delayMs)
+    } else {
+      intervalRef.current = setInterval(poll, POLL_MS)
+      void poll()
+    }
+  }
 
+  // Start polling immediately when the panel mounts,
+  // but thanks to the improved stop conditions this won't "finish" too early.
+  useEffect(() => {
+    startPolling(0)
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
+      if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current)
       onLoadingChange?.(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // When a NEW selection triggers a fresh run, wait 5s before the first check
+  useEffect(() => {
+    const off = onNewRun(() => {
+      startPolling(5000) // 5-second grace period after selection
+    })
+    return off
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -117,7 +196,8 @@ export function ReportsPanel({
         </>
       )}
 
-      {!isLoadingReports && reports.length === 0 && !reportsError && (
+      {/* Only show the empty state if a cycle actually ended */}
+      {!isLoadingReports && reports.length === 0 && !reportsError && endedRef.current && (
         <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
           <p>No reports found. The Python script may not have run yet.</p>
         </div>

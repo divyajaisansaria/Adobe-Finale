@@ -1,8 +1,11 @@
-// src/app/api/reports/route.ts
-
+// app/api/reports/route.ts
 import { NextResponse } from "next/server"
 import fs from "fs/promises"
 import path from "path"
+import { getRunState } from "@/lib/model2-runner"
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 type ExtractedSection = {
   document: string
@@ -33,13 +36,20 @@ export async function GET(req: Request) {
   const outputsDir = path.join(process.cwd(), "public", "model2", "outputs")
 
   try {
-    // client may send ?known=abc.json,def.json
     const { searchParams } = new URL(req.url)
-    const known = (searchParams.get("known") || "").split(",").filter(Boolean)
+    const known = (searchParams.get("known") || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean)
 
-    const filenames = await fs.readdir(outputsDir)
+    let filenames: string[]
+    try {
+      filenames = await fs.readdir(outputsDir)
+    } catch {
+      filenames = []
+    }
+
     const jsonFiles = filenames.filter((f) => f.endsWith(".json"))
-
     const newFiles = jsonFiles.filter((f) => !known.includes(f))
 
     const reports: ReportFile[] = []
@@ -60,7 +70,8 @@ export async function GET(req: Request) {
       }
     }
 
-    return NextResponse.json({ newReports: reports, newFiles })
+    const { running } = getRunState()
+    return NextResponse.json({ newReports: reports, newFiles, running })
   } catch (error) {
     console.error("Error reading report files:", error)
     return NextResponse.json({ error: "Could not retrieve reports." }, { status: 500 })
