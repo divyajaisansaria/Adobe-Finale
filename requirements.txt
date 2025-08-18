@@ -22,3 +22,4 @@ google.genai
 
 openai 
 azure-cognitiveservices-speech
+pydub
