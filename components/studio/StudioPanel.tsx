@@ -55,6 +55,8 @@ export function StudioPanel({
   const [summary, setSummary] = useState<string | null>(null)
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [podcastUrl, setPodcastUrl] = useState<string | null>(null);
+  const [isPodcastLoading, setIsPodcastLoading] = useState(false);
   React.useEffect(() => {
     if (selectedFile) {
       setActiveFeature(null) // null means HeadingOverview is shown
@@ -89,7 +91,41 @@ export function StudioPanel({
 
   // Reports spinner state (child toggles via callback)
   // const [isReportsLoading, setIsReportsLoading] = useState(false)
+  const handleFeatureClick = async (featureKey: string) => {
+    setActiveFeature(featureKey);
 
+    if (featureKey === "Summary") {
+      handleSummary();
+    }
+
+    if (featureKey === "Audio Overview") {
+      if (!currentSelection?.trim()) {
+        alert("Please select some text to generate the podcast!");
+        return;
+      }
+
+      setIsPodcastLoading(true);
+      setPodcastUrl(null);
+
+      try {
+        const res = await fetch("/api/podcast", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: currentSelection }),
+        });
+
+        if (!res.ok) throw new Error("Failed to generate podcast");
+
+        const data = await res.json();
+        setPodcastUrl(data.audioUrl);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to generate podcast");
+      } finally {
+        setIsPodcastLoading(false);
+      }
+    }
+  };
   const renderScrollableContent = () => {
     switch (activeFeature) {
       case "Reports":
@@ -107,18 +143,15 @@ export function StudioPanel({
       case "Ask Anything":
         return <AskAnything pdfUrl={selectedFile?.url} />
       case "Audio Overview":
-        return <AudioOverview selectedText={currentSelection} />
+        return <AudioOverview
+          audioUrl={podcastUrl}
+          loading={isPodcastLoading}
+        />
       default:
         return <HeadingOverview selectedFile={selectedFile} onNavigateRequest={onNavigateRequest} />
     }
   }
 
-  const handleFeatureClick = (featureKey: string) => {
-    setActiveFeature(featureKey)
-    // Keep original trigger timing: Summary fetch starts on click
-    if (featureKey === "Summary") handleSummary()
-    // Reports polling starts when ReportsPanel mounts (equivalent to your previous click->start)
-  }
 
   return (
     <Card
@@ -191,7 +224,8 @@ export function StudioPanel({
                   onClick={() => handleFeatureClick(feature.featureKey)}
                   isLoading={
                     (feature.featureKey === "Summary" && isSummarizing) ||
-                    (feature.featureKey === "Reports" && isReportsLoading)
+                    (feature.featureKey === "Reports" && isReportsLoading) ||
+                    (feature.featureKey === "Audio Overview" && isPodcastLoading)
                   }
                 />
               ))}
