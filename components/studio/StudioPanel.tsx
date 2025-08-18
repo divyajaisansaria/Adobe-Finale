@@ -40,11 +40,13 @@ export function StudioPanel({
   isReportsLoading,
   onReportsLoadingChange,
   onNavigateRequest,
+  currentSelection, // ✅ add this
 }: {
   selectedFile: FileRecord | null
   isReportsLoading: boolean
   onReportsLoadingChange: (isLoading: boolean) => void
   onNavigateRequest: (target: NavigationTarget) => void
+  currentSelection?: string // ✅ optional string
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [activeFeature, setActiveFeature] = useState<string | null>(null)
@@ -105,7 +107,7 @@ export function StudioPanel({
       case "Ask Anything":
         return <AskAnything pdfUrl={selectedFile?.url} />
       case "Audio Overview":
-        return <AudioOverview />
+        return <AudioOverview selectedText={currentSelection} />
       default:
         return <HeadingOverview selectedFile={selectedFile} onNavigateRequest={onNavigateRequest} />
     }

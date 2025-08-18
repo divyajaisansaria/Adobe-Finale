@@ -48,6 +48,7 @@ export default function MainPage() {
   const [isInsightPanelOpen, setIsInsightPanelOpen] = React.useState(false)
   const [triggerFetch, setTriggerFetch] = React.useState(false)
   const [isInsightBulbGlowing, setIsInsightBulbGlowing] = React.useState(false)
+
   const refreshSources = React.useCallback(async () => {
     const records = await getAllFileRecords()
     setSources(records.reverse())
@@ -56,7 +57,7 @@ export default function MainPage() {
   React.useEffect(() => {
     refreshSources()
   }, [refreshSources])
-  
+
   React.useEffect(() => {
     // If the user has selected text, turn the shimmer on.
     if (currentSelection.trim()) {
@@ -64,8 +65,8 @@ export default function MainPage() {
       setIsInsightBulbGlowing(true)
     }
   }, [currentSelection]) // This runs every time the selection changes.
-  
-  
+
+
   const handleRemoveSource = async (id: number) => {
     await deleteFileRecord(id)
     if (selectedFile?.id === id) setSelectedFile(null)
@@ -81,9 +82,9 @@ export default function MainPage() {
       if (typeof window !== "undefined" && window.innerWidth < 768) setActiveTab("chat")
     }
   }
-  
+
   const hasSources = sources.length > 0
-  
+
   return (
     <div className="app-bg flex h-screen flex-col overflow-hidden bg-background text-foreground">
       <style>{bulbGlowAnimation + bulbColorAnimation}</style>
@@ -118,6 +119,7 @@ export default function MainPage() {
 
           <StudioPanel
             selectedFile={selectedFile}
+            currentSelection={currentSelection}  // ✅ pass selected text
             onNavigateRequest={setNavigationQueue}
             isReportsLoading={isReportsLoading}
             onReportsLoadingChange={setIsReportsLoading}
@@ -174,46 +176,52 @@ export default function MainPage() {
             </div>
 
             <div className={`absolute inset-0 ${activeTab === "studio" ? "block" : "hidden"}`}>
-              <StudioPanel selectedFile={selectedFile} onNavigateRequest={setNavigationQueue} />
+              <StudioPanel
+                selectedFile={selectedFile}
+                currentSelection={currentSelection}  // ✅ pass selected text
+                onNavigateRequest={setNavigationQueue}
+                isReportsLoading={isReportsLoading}
+                onReportsLoadingChange={setIsReportsLoading}
+              />
             </div>
           </div>
         </div>
       </main>
 
       {/* Floating Insight Button */}
-     <div className="fixed bottom-6 right-6 z-40 h-14 w-14">
-  
-  {/* The Glow Element (remains the same) */}
-  {isInsightBulbGlowing && (
-    <div className="absolute inset-0 rounded-full animate-[bulb-glow_2s_ease-in-out_infinite]" />
-  )}
+      <div className="fixed bottom-6 right-6 z-40 h-14 w-14">
 
-  {/* Your Button with conditional background animation */}
-  <Button
-    className={`
+        {/* The Glow Element (remains the same) */}
+        {isInsightBulbGlowing && (
+          <div className="absolute inset-0 rounded-full animate-[bulb-glow_2s_ease-in-out_infinite]" />
+        )}
+
+        {/* Your Button with conditional background animation */}
+        <Button
+          className={`
       relative h-full w-full rounded-full shadow-lg
       
       {/* ✅ THIS IS THE KEY CHANGE */}
       ${isInsightBulbGlowing
-        ? 'animate-[color-pulse_2s_ease-in-out_infinite]' // When glowing, run the color animation
-        : 'bg-neutral-200 text-black hover:bg-neutral-300' // Otherwise, use static colors
-      }
+              ? 'animate-[color-pulse_2s_ease-in-out_infinite]' // When glowing, run the color animation
+              : 'bg-neutral-200 text-black hover:bg-neutral-300' // Otherwise, use static colors
+            }
     `}
-    onClick={() => {
-      if (!currentSelection.trim()) {
-        alert("Please select text to generate insights!")
-        return
-      }
-      setIsInsightPanelOpen(true)
-      setTriggerFetch(prev => !prev)
-      setIsInsightBulbGlowing(false) 
-    }}
-    size="icon"
-    aria-label="Open insights"
-  >
-    <Lightbulb className="h-6 w-6" />
-  </Button>
-</div>
+          onClick={() => {
+            if (!currentSelection.trim()) {
+              alert("Please select text to generate insights!")
+              return
+            }
+            setIsInsightPanelOpen(true)
+            setTriggerFetch(prev => !prev)
+            setIsInsightBulbGlowing(false)
+          }}
+          size="icon"
+          aria-label="Open insights"
+        >
+          <Lightbulb className="h-6 w-6" />
+        </Button>
+      </div>
 
       {/* Insight Panel */}
       <InsightPanel

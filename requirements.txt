@@ -19,3 +19,6 @@ sentence-transformers==2.6.1
 google-generativeai 
 python-dotenv
 google.genai
+
+openai 
+azure-cognitiveservices-speech
