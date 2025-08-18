@@ -1,3 +1,6 @@
+"use client";
+// lib/model1-client.ts
+
 // lib/model1-client.ts
 export async function runModel1OnUrl(url: string, name: string) {
   const res = await fetch(url);

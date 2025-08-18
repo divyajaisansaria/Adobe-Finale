@@ -1,3 +1,6 @@
+import "server-only";
+// lib/model2-runner.ts
+
 // lib/model2-runner.ts
 import type { ChildProcess } from "child_process"
 import { spawn } from "child_process"

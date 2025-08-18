@@ -1,25 +1,23 @@
-# python/model_2/requirements.txt
---index-url https://download.pytorch.org/whl/cpu
---extra-index-url https://pypi.org/simple
+--index-url https://pypi.org/simple
+--extra-index-url https://download.pytorch.org/whl/cpu
 
-# PyTorch CPU wheels
-torch==2.7.1
-
-# Numerics / PDF
+# Core numerics / HTTP / PDF
 numpy==2.0.2
+requests>=2.25.0
 pdfplumber==0.11.4
 
-# HF stack (uses prebuilt Windows wheels on cp312)
+# ML stack (CPU)
+torch==2.3.1
 transformers==4.46.3
 tokenizers==0.20.3
 huggingface-hub==0.24.6
-
-# Sentence-Transformers on top of transformers
 sentence-transformers==2.6.1
-google-generativeai 
-python-dotenv
-google.genai
 
-openai 
-azure-cognitiveservices-speech
-pydub
+# Vertex AI (Gemini via service account)
+google-cloud-aiplatform>=1.66.0
+
+# TTS (podcast)
+azure-cognitiveservices-speech>=1.35,<2.0
+
+# Audio helper (uses ffmpeg in the image)
+pydub>=0.25.0

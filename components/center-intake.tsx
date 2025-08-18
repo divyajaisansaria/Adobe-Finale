@@ -1,4 +1,4 @@
-// CenterIntake.tsx
+// components/centre-intake.tsx
 "use client"
 
 import * as React from "react"
@@ -6,16 +6,18 @@ import { useEffect, useMemo, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { UploadCloud, Loader2 } from "lucide-react"
-import { runModel2WithSelection } from "@/lib/model2-client" // ✨ keep
+import { runModel2WithSelection } from "@/lib/model2-client"
 
 export function CenterIntake({
   title = "Untitled notebook",
   hasSources = false,
   pdfUrl,
-  onOpenAdd = () => { },
+  onOpenAdd = () => {},
   navigationTarget,
   onViewerReady,
-  onSelectionChange, // ✅ new prop
+  onSelectionChange,
+  /** 🔑 add this */
+  adobeClientId,
 }: {
   title?: string
   hasSources?: boolean
@@ -24,6 +26,8 @@ export function CenterIntake({
   navigationTarget?: { page?: number | string; text?: string } | null
   onViewerReady?: (ready: boolean) => void
   onSelectionChange?: (text: string) => void
+  /** 🔑 add this */
+  adobeClientId: string
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<any>(null)
@@ -50,9 +54,7 @@ export function CenterIntake({
   const hardCleanup = React.useCallback(() => {
     viewerRef.current = null
     apisPromiseRef.current = null
-    if (containerRef.current) {
-      containerRef.current.innerHTML = ""
-    }
+    if (containerRef.current) containerRef.current.innerHTML = ""
   }, [])
 
   useEffect(() => {
@@ -64,27 +66,35 @@ export function CenterIntake({
     }
     if (!sdkReadyRef.current) return
     if (currentFileKeyRef.current === pdfUrl) return
+
+    // 🔒 guard: need the client id
+    if (!adobeClientId) {
+      console.error("Missing Adobe Embed API key (adobeClientId)")
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     hardCleanup()
     currentFileKeyRef.current = pdfUrl
 
     try {
       const adobeDCView = new (window as any).AdobeDC.View({
-        clientId: "c00e026f37cc451aae1ee54adde2fca8",
-        divId: instanceId
+        clientId: adobeClientId, // 🔑 use the prop
+        divId: instanceId,
       })
 
       const previewPromise = adobeDCView.previewFile(
         {
           content: { location: { url: pdfUrl } },
-          metaData: { fileName: title }
+          metaData: { fileName: title },
         },
         {
           embedMode: "SIZED_CONTAINER",
           defaultViewMode: "FIT_WIDTH",
           showFullScreen: true,
           showDownloadPDF: true,
-          enableSearchAPIs: true
+          enableSearchAPIs: true,
         }
       )
 
@@ -97,19 +107,14 @@ export function CenterIntake({
                 try {
                   const result = await apis.getSelectedContent()
                   selectedTextRef.current = result?.data ?? ""
-                  console.log("selectedText =", selectedTextRef.current)
 
                   const q = selectedTextRef.current.trim()
                   if (q) {
-                    // ✅ Notify parent about the selected text
                     onSelectionChange?.(q)
-
                     if (!isRunningRef.current) {
                       isRunningRef.current = true
                       try {
-                        console.log("Sending selected text to model:", q)
-                        const url = await runModel2WithSelection(q)
-                        console.log("Model 2 output folder:", url)
+                        await runModel2WithSelection(q)
                       } finally {
                         isRunningRef.current = false
                       }
@@ -144,7 +149,7 @@ export function CenterIntake({
     return () => {
       hardCleanup()
     }
-  }, [pdfUrl, title, instanceId, hardCleanup, onViewerReady])
+  }, [pdfUrl, title, instanceId, hardCleanup, onViewerReady, adobeClientId])
 
   // --- Handle navigation & highlight (unchanged) ---
   useEffect(() => {
