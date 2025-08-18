@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import { useEffect, useRef, useState } from "react"
-import { Loader2, ChevronDown, ChevronUp } from "lucide-react"
+import { Loader, ChevronDown, ChevronUp } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { ReportFile } from "./types"
 import { onNewRun } from "@/lib/reportBus"
@@ -205,7 +205,7 @@ export function ReportsPanel({
 
       {reports.length === 0 && isLoadingReports && (
         <div className="flex items-center justify-center p-6">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader className="h-6 w-6 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Waiting for first output…</span>
         </div>
       )}
@@ -332,7 +332,7 @@ export function ReportsPanel({
 
       {reports.length > 0 && isLoadingReports && (
         <div className="flex items-center justify-start p-2">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
           <span className="ml-2 text-xs text-muted-foreground">Watching for new outputs…</span>
         </div>
       )}

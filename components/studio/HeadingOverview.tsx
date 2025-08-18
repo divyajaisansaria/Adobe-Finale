@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import { useEffect, useState } from "react"
+import {Loader} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
 import type { FileRecord } from "@/lib/idb"
 import type { OutlineItem, NavigationTarget } from "./types"
 
@@ -68,7 +68,7 @@ export function HeadingOverview({
     <div className="flex-1 overflow-y-auto p-4">
       {isLoadingOutline ? (
         <div className="flex items-center justify-center p-6">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : outlineError ? (
         <div className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">

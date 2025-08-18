@@ -34,6 +34,7 @@ const bulbColorAnimation = `
   }
 `;
 export default function MainPage() {
+
   const [isModalOpen, setIsModalOpen] = React.useState(true)
   const [sources, setSources] = React.useState<FileRecord[]>([])
   const [activeTab, setActiveTab] = React.useState<"sources" | "chat" | "studio">("sources")

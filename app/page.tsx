@@ -1,7 +1,6 @@
 import { SiteHeader } from "@/components/site-header"
 import { Hero } from "@/components/hero"
 import { FeaturesExact } from "@/components/feature-cards"
-import { Steps } from "@/components/steps"
 import { Showcase } from "@/components/showcase"
 import { FAQ } from "@/components/faq"
 import { SiteFooter } from "@/components/site-footer"
@@ -19,4 +18,5 @@ export default function Page() {
       <SiteFooter />
     </div>
   )
+  
 }

@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader } from "lucide-react";
 
 interface SummaryPanelProps {
   summary: string | null;        // plain text only
@@ -51,7 +51,7 @@ export default function SummaryPanel({ summary, isSummarizing, summaryError }: S
 
       {isSummarizing ? (
         <div className="flex items-center gap-2">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <Loader className="h-5 w-5 animate-spin text-muted-foreground" />
           <span>Generating summary, please wait...</span>
         </div>
       ) : (
