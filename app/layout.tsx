@@ -31,7 +31,9 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="ui-theme"   // <- important: consistent key
         >
-          {children}
+          <div id="page-scale-wrapper">
+            {children}
+          </div>
         </ThemeProvider>
         <ScrollRestoration />
         <Script src="https://acrobatservices.adobe.com/view-sdk/viewer.js" strategy="afterInteractive" />

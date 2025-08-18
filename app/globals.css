@@ -223,3 +223,25 @@ html.dark .glass-tile {
   scrollbar-width: thin;
   scrollbar-color: rgba(100, 100, 100, 0.4) transparent;
 }
+:root { --app-scale: .75; }
+
+/* Your existing wrapper scale (Firefox fallback) */
+@media (hover: hover) and (pointer: fine) {
+  #page-scale-wrapper {
+    transform: scale(var(--app-scale));
+    transform-origin: top left;
+    width: calc(100% / var(--app-scale));
+    min-height: calc(100vh / var(--app-scale));
+  }
+
+  /* One-time fixes for common Tailwind classes */
+  .h-screen     { height:     calc(100vh / var(--app-scale)) !important; }
+  .min-h-screen { min-height: calc(100vh / var(--app-scale)) !important; }
+  .max-h-screen { max-height: calc(100vh / var(--app-scale)) !important; }
+}
+
+/* Prefer native zoom when available (keeps text sharp & vh correct) */
+@supports (zoom: 1) {
+  html { zoom: var(--app-scale); }
+  #page-scale-wrapper { transform: none; width: 100%; min-height: 100vh; }
+}
