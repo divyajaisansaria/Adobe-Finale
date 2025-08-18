@@ -25,8 +25,7 @@ export function FeatureTile({
   isActive?: boolean
   isLoading?: boolean
 }) {
-  const needsLoadingSpinner = (label === "Summary" || label === "Relevant Section") && isLoading
-
+  const needsLoadingSpinner = (label === "Summary" || label === "Relevant Section" ) && isLoading
   return (
     <>
       {/* STEP 1: Inject the keyframes directly into the page's styles.

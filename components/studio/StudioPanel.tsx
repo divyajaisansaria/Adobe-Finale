@@ -53,6 +53,11 @@ export function StudioPanel({
   const [summary, setSummary] = useState<string | null>(null)
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
+  React.useEffect(() => {
+    if (selectedFile) {
+      setActiveFeature(null) // null means HeadingOverview is shown
+    }
+  }, [selectedFile])
 
   const handleSummary = async () => {
     if (!selectedFile?.url) {

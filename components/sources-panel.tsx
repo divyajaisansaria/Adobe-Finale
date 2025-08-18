@@ -111,7 +111,7 @@ export function SourcesPanel({
                          [&::-webkit-scrollbar]:hidden"
             >
               <div className="flex flex-col items-center gap-2 pb-2">
-                {sources.map((file) => (
+                {[...sources].reverse().map((file) => (
                   <Tooltip key={file.id}>
                     <TooltipTrigger asChild>
                       <Button
@@ -162,7 +162,7 @@ export function SourcesPanel({
             <div className="relative -mx-4 mt-4 flex-1 overflow-hidden px-1">
               <ScrollArea className="h-full">
                 <ul className="px-3 pb-3">
-                  {sources.map((file) => (
+                  {[...sources].reverse().map((file) => (
                     <li
                       key={file.id}
                       className="group my-1 flex cursor-pointer items-center justify-between rounded-lg px-2 py-2.5 transition-colors duration-200 hover:bg-accent"

@@ -152,7 +152,9 @@ export function ReportsPanel({
         const idleTooLongInitially = !sawRunningRef.current && idleStrikesRef.current >= MAX_IDLE_STRIKES
 
         if (timeUp || jobEnded || idleTooLongInitially) {
-          stopPolling()
+          if(sawRunningRef.current || timeUp) {
+            stopPolling()
+          }
         }
       } catch (err: any) {
         setReportsError(err.message || "Polling error")
