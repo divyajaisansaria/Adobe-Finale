@@ -121,8 +121,7 @@ We have built a web-based PDF reading experience that helps users connect the do
 * **Backend & AI**:
     * **API & Containerization**: Python, Docker
     * **Media Management**: Cloudinary
-    * **AI Models**: Model 1, Model 2, bge-small-en-v1.
-* **Database/Vector Search**: ChromaDB / FAISS for semantic search and retrieval
+    * **AI Models**: Heading Extractin(model A),Relevant Section(model B),cross-encoder-ms-marco.
 
 ### 7. Team
 
