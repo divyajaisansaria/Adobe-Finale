@@ -29,7 +29,7 @@ import { AskAnything } from "./AskAnything"
 import SummaryPanel from "@/components/studio/SummaryPanel"
 
 const studioFeatures = [
-  { name: "Audio Overview", icon: <AudioLines />, featureKey: "Audio Overview", bgColor: "bg-[#32343d] hover:bg-[#42444d]" },
+  { name: "Podcast", icon: <AudioLines />, featureKey: "Audio Overview", bgColor: "bg-[#32343d] hover:bg-[#42444d]" },
   { name: "Ask Anything", icon: <Sparkles />, featureKey: "Ask Anything", bgColor: "bg-[#303632] hover:bg-[#404642]" },
   { name: "Summary", icon: <Brain />, featureKey: "Summary", bgColor: "bg-[#3b3138] hover:bg-[#4b4148]" },
   { name: "Relevant Section", icon: <Highlighter />, featureKey: "Reports", bgColor: "bg-[#3b3b30] hover:bg-[#4b4b40]" },

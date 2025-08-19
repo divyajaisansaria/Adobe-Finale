@@ -45,19 +45,21 @@ function ThemeToggle() {
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2" aria-label="Home">
-          <span className="inline-flex h-8 w-8 items-center justify-center border-border">
-            <MainIcon className="h-5 w-5 text-foreground" />
-          </span>
-          <span className="text-sm font-semibold text-foreground">Acrobate</span>
-        </Link>
+  <div className="flex w-full items-center justify-between px-4 sm:px-6 lg:px-8 min-h-[4rem]">
+    <Link href="/" className="flex items-center gap-2" aria-label="Home">
+      <span className="inline-flex h-8 w-8 items-center justify-center border border-border rounded">
+        <MainIcon className="h-5 w-5 text-foreground" />
+      </span>
+      <span className="text-sm font-semibold text-foreground sm:text-base lg:text-lg">
+        Acrobate
+      </span>
+    </Link>
 
-        <div className="flex items-center gap-2">
-          {/* Material Symbols theme toggle */}
-          <ThemeToggle />
-        </div>
-      </div>
-    </header>
+    <div className="flex items-center gap-2">
+      <ThemeToggle />
+    </div>
+  </div>
+</header>
+ 
   )
 }

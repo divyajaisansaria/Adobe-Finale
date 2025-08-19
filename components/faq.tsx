@@ -3,20 +3,20 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 export function FAQ() {
   const faqs = [
     {
-      q: "What file types are supported?",
-      a: "You can upload PDFs, Word documents, PowerPoint slides, spreadsheets (CSV), and add web links. More formats are coming soon.",
+      q: "How to Run Relevant Section?",
+      a: "You can Run Relevant Section just by selecting the Text in a PDF",
     },
     {
-      q: "Are answers cited?",
-      a: "Yes. Responses include citations with links or quotes back to your exact sources so you can verify.",
+      q: "Is there ChatBot?",
+      a: "Yes, There is Feature of ChatBot.",
     },
     {
       q: "Is my data private?",
       a: "Your sources are private by default. You choose what to share and with whom. We never use your data to train third‑party models.",
     },
     {
-      q: "Do you have a free plan?",
-      a: "We offer a generous free tier while in beta. Paid plans with higher limits will be available at launch.",
+      q: "How to see Insights ?",
+      a: "Insight bulb can be activated by selecting the text and clicking on the bulb icon.",
     },
   ]
 

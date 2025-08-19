@@ -14,10 +14,10 @@ type NavigationTarget = { page: number; text: string }
 const bulbGlowAnimation = `
   @keyframes bulb-glow {
     0%, 100% {
-      box-shadow: 0 0 15px rgba(251, 191, 36, 0.5), 0 0 5px rgba(251, 191, 36, 0.7);
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.5), 0 0 5px rgba(209, 160, 37, 0.7);
     }
     50% {
-      box-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 10px rgba(251, 191, 36, 1);
+      box-shadow: 0 0 30px rgba(189, 151, 55, 0.8), 0 0 10px rgba(196, 156, 55, 1);
     }
   }
 `;
@@ -28,7 +28,7 @@ const bulbColorAnimation = `
       color: #000;
     }
     50% {
-      background-color: #fcd34d; /* yellow-300 */
+      background-color: #c6ab55ff; /* yellow-300 */
       color: #000;
     }
   }
