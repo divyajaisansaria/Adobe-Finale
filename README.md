@@ -70,7 +70,7 @@ Once the container is running, the application will be accessible at **[http://l
 
 | Variable                       | Description                                                                 |
 | ------------------------------ | --------------------------------------------------------------------------- |
-| `ADOBE_EMBED_API_KEY`          | Your API key for the Adobe PDF Embed API.                                   |
+| `ADOBE_EMBED_API_KEY`          | Your API key for the Adobe PDF Embed API.("c00e026f37cc451aae1ee54adde2fca8")                                  |
 | `LLM_PROVIDER`                 | The LLM provider to use (e.g., `gemini`, `ollama`).                           |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Path inside the container to your GCP credentials JSON file.                |
 | `GEMINI_MODEL`                 | The specific Gemini model to use (e.g., `gemini-2.5-flash`).                  |
@@ -117,11 +117,11 @@ We have built a web-based PDF reading experience that helps users connect the do
 
 ### 6. Tech Stack
 
-* **Frontend**: Next.js, Tailwind CSS, Adobe PDF Embed API
+* **Frontend**:Next.js, Tailwind CSS, Adobe PDF Embed API (Dark/Light Mode)
 * **Backend & AI**:
     * **API & Containerization**: Python, Docker
-    * **Media Management**: Cloudinary
-    * **AI Models**: Heading Extraction(model A),Relevant Section(model B) , cross-encoder-ms-marco , bge-small-en-v1.
+    * **Media Management**: Cloudinary,IndexedDB
+    * **AI Models**: Heading Extraction (Model 1-A), Relevant Section Scoring (Model 1-B), CrossEncoder (ms-marco), bge-small-en-v1, Gemini 2.5 Flash, Microsoft Azure TTS
 
 ### 7. Team
 
