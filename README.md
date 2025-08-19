@@ -26,21 +26,20 @@ The `run` command differs slightly between operating systems due to the way file
 
 #### For Windows (using Command Prompt)
 
-Use a Windows-style path. You can use `%cd%` if your `credentials` folder is in the same directory as your `Dockerfile`.
-
 ```powershell
-docker run -v C:\path\to\your\credentials:/credentials \
-  -e ADOBE_EMBED_API_KEY=<YOUR_ADOBE_EMBED_API_KEY> \
-  -e LLM_PROVIDER=gemini \
-  -e GOOGLE_APPLICATION_CREDENTIALS=/credentials/adbe-gcp.json \
-  -e GEMINI_MODEL=gemini-2.5-flash \
-  -e TTS_PROVIDER=azure \
-  -e AZURE_TTS_KEY=<YOUR_AZURE_TTS_KEY> \
-  -e AZURE_TTS_ENDPOINT=<YOUR_AZURE_TTS_ENDPOINT> \
-  -p 8080:8080 \
+docker run `
+  -v "/path/to/credentials:/credentials" `
+  -e "ADOBE_EMBED_API_KEY=c00e026f37cc451aae1ee54adde2fca8" `
+  -e "LLM_PROVIDER=gemini" `
+  -e "GOOGLE_APPLICATION_CREDENTIALS=/credentials/adbe-gcp.json" `
+  -e "GEMINI_MODEL=gemini-2.5-flash" `
+  -e "TTS_PROVIDER=azure" `
+  -e "AZURE_TTS_KEY=TTS_KEY" `
+  -e "AZURE_TTS_ENDPOINT=TTS_ENDPOINT" `
+  -p 8080:8080 `
   adobe-website
 ```
-*Replace `C:\path\to\your\credentials` with the actual path to your credentials folder.*
+*Replace `/path/to/credentials` with the actual path to your credentials folder.*
 
 ---
 
@@ -49,7 +48,7 @@ docker run -v C:\path\to\your\credentials:/credentials \
 Use an absolute path for your credentials folder.
 
 ```bash
-docker run -v /path/to/your/credentials:/credentials \
+docker run -v "/path/to/your/credentials:/credentials" \
   -e ADOBE_EMBED_API_KEY=<YOUR_ADOBE_EMBED_API_KEY> \
   -e LLM_PROVIDER=gemini \
   -e GOOGLE_APPLICATION_CREDENTIALS=/credentials/adbe-gcp.json \
