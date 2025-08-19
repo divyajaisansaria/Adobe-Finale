@@ -49,7 +49,7 @@ Use an absolute path for your credentials folder.
 
 ```bash
 docker run -v "/path/to/your/credentials:/credentials" \
-  -e ADOBE_EMBED_API_KEY=<YOUR_ADOBE_EMBED_API_KEY> \
+  -e ADOBE_EMBED_API_KEY=c00e026f37cc451aae1ee54adde2fca8 \
   -e LLM_PROVIDER=gemini \
   -e GOOGLE_APPLICATION_CREDENTIALS=/credentials/adbe-gcp.json \
   -e GEMINI_MODEL=gemini-2.5-flash \
