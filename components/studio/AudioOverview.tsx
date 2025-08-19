@@ -1,16 +1,13 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { Play, Pause, FastForward } from "lucide-react";
+import { Play, Pause, FastForward, Loader, Clock } from "lucide-react";
 
-// Helper function to format time from seconds to MM:SS
+// Helper: MM:SS
 const formatTime = (timeInSeconds: number) => {
   const minutes = Math.floor(timeInSeconds / 60);
   const seconds = Math.floor(timeInSeconds % 60);
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-    2,
-    "0"
-  )}`;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 };
 
 export function AudioOverview({
@@ -26,48 +23,72 @@ export function AudioOverview({
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
 
-  // --- NEW: Refs and State for Web Audio API ---
+  // Web Audio API (robust version)
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const [frequencyData, setFrequencyData] = useState<Uint8Array>(new Uint8Array(0));
   const animationFrameRef = useRef<number>();
 
-  // This effect handles the audio element's native events
+  // Reset on URL change (avoid stale time/playing state)
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    try {
+      audio.pause();
+    } catch {}
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    audio.playbackRate = playbackRate; // preserve speed
+    audio.load(); // reload metadata for the new src
+  }, [audioUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Native audio events
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     const updateCurrentTime = () => setCurrentTime(audio.currentTime);
-    const setAudioDuration = () => setDuration(audio.duration);
+    const setAudioDuration = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
+    const handleError = () => setIsPlaying(false);
 
     audio.addEventListener("timeupdate", updateCurrentTime);
     audio.addEventListener("loadedmetadata", setAudioDuration);
+    audio.addEventListener("durationchange", setAudioDuration);
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("ended", handlePause);
+    audio.addEventListener("error", handleError);
 
     return () => {
       audio.removeEventListener("timeupdate", updateCurrentTime);
       audio.removeEventListener("loadedmetadata", setAudioDuration);
+      audio.removeEventListener("durationchange", setAudioDuration);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handlePause);
+      audio.removeEventListener("error", handleError);
     };
   }, [audioUrl]);
 
-  // --- NEW: Function to set up the Web Audio API ---
+  // Setup Web Audio (do NOT connect analyser to destination → avoids echo)
   const setupAudioContext = () => {
     if (audioRef.current && !audioContextRef.current) {
-      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as {
+        new (): AudioContext;
+      };
+      const context = new Ctx();
       const analyser = context.createAnalyser();
-      analyser.fftSize = 64; // Determines number of data points (fftSize / 2)
+      analyser.fftSize = 1024; // keep your UI choice
+      analyser.smoothingTimeConstant = 0.8;
 
       const source = context.createMediaElementSource(audioRef.current);
       source.connect(analyser);
-      analyser.connect(context.destination);
+      // ❌ Do NOT: analyser.connect(context.destination)
+      // The <audio> element already outputs sound; routing analyser to destination causes double audio.
 
       audioContextRef.current = context;
       analyserRef.current = analyser;
@@ -76,48 +97,66 @@ export function AudioOverview({
     }
   };
 
-  // --- NEW: Animation loop to update visualizer ---
+  // Visualizer loop
   const runAnimation = () => {
     if (analyserRef.current) {
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
       analyserRef.current.getByteFrequencyData(dataArray);
-      setFrequencyData(dataArray);
+      setFrequencyData(dataArray); // state drives your gradient bars
       animationFrameRef.current = requestAnimationFrame(runAnimation);
     }
   };
 
-  // Effect to start/stop the animation loop based on play state
+  // Start/stop animation on play state
   useEffect(() => {
     if (isPlaying) {
-      audioContextRef.current?.resume(); // Resume context if suspended
+      audioContextRef.current?.resume().catch(() => {});
       runAnimation();
-    } else {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+    } else if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = undefined;
     }
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = undefined;
       }
     };
   }, [isPlaying]);
 
-  const togglePlayPause = () => {
-    // Lazy-initialize audio context on first play to comply with browser policies
-    if (!audioContextRef.current) {
-      setupAudioContext();
-    }
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      try { sourceRef.current?.disconnect(); } catch {}
+      try { analyserRef.current?.disconnect(); } catch {}
+      const ctx = audioContextRef.current;
+      if (ctx && ctx.state !== "closed") {
+        ctx.close().catch(() => {});
+      }
+      audioContextRef.current = null;
+      analyserRef.current = null;
+      sourceRef.current = null;
+    };
+  }, []);
 
-    if (audioRef.current) {
-      isPlaying ? audioRef.current.pause() : audioRef.current.play();
+  // Controls
+  const togglePlayPause = () => {
+    if (!audioContextRef.current) setupAudioContext(); // lazy init on first interaction
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audioContextRef.current?.resume().catch(() => {});
+      audio.play();
     }
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = Number(e.target.value);
-    }
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = Number(e.target.value);
   };
 
   const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,15 +167,19 @@ export function AudioOverview({
     }
   };
 
-  // --- NEW: Calculate progress for the styled progress bar ---
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const speedProgressPercent = ((playbackRate - 0.5) / 1.5) * 100;
+  const safeDuration = Number.isFinite(duration) ? duration : 0;
+  const progressPercent = safeDuration > 0 ? (currentTime / safeDuration) * 100 : 0;
+  const speedPercent = ((playbackRate - 0.5) / 1.5) * 100;
 
-  // Conditional Rendering
+  // Segments (every 30s)
+  const segmentLength = 30;
+  const segments = Array.from({ length: Math.ceil(safeDuration / segmentLength) }, (_, i) => i * segmentLength);
+
+  // Loading / Empty
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-48 text-gray-400">
-        Generating podcast, please wait.
+        <Loader className="mr-2 animate-spin" /> Generating podcast...
       </div>
     );
   }
@@ -148,48 +191,75 @@ export function AudioOverview({
     );
   }
 
-  return (
-    <div className="p-8 flex flex-col items-center gap-6">
-      <audio ref={audioRef} src={audioUrl} preload="metadata" crossOrigin="anonymous" />
+  // Stretch only first part of spectrum (your UI)
+  const usefulData = frequencyData.slice(0, Math.max(0, Math.floor(frequencyData.length / 4)));
 
-      {/* --- UPDATED: Dynamic Audio Visualizer --- */}
-      <div className="flex justify-center w-full">
-        <div className="flex items-end gap-1 h-28">
-          {Array.from(frequencyData).map((freqValue, i) => (
-            <div
-              key={i}
-              className="w-1.5 rounded-full bg-cyan-400/80 transition-all duration-75"
-              style={{ height: `${(freqValue / 255) * 100}%` }}
-            />
-          ))}
-        </div>
+  return (
+    <div className="p-6 flex flex-col gap-6 bg-gray-800/70 rounded-2xl shadow-xl w-full max-w-2xl mx-auto">
+      {/* force a fresh <audio> when src changes */}
+      <audio
+        key={audioUrl}
+        ref={audioRef}
+        src={audioUrl}
+        preload="metadata"
+        crossOrigin="anonymous"
+      />
+
+      {/* Header */}
+      <div className="flex flex-col items-center text-center">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          🎧 Podcast Mode
+        </h2>
       </div>
 
-
-      <button
-        onClick={togglePlayPause}
-        className="w-14 h-14 bg-cyan-500/90 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-cyan-400 transition-transform hover:scale-110"
+      {/* Visualizer (gradient bars) */}
+      <div
+        className="grid items-end gap-[2px] h-28 w-full bg-gray-900/80 rounded-lg p-3"
+        style={{ gridTemplateColumns: `repeat(${usefulData.length || 1}, 1fr)` }}
       >
-        {isPlaying ? <Pause size={22} /> : <Play size={22} className="ml-1" />}
-      </button>
+        {Array.from(usefulData).map((f, i) => (
+          <div
+            key={i}
+            className="rounded-t-full bg-gradient-to-t from-blue-500 to-cyan-300"
+            style={{
+              height: `${(f / 255) * 100}%`,
+              filter: "drop-shadow(0 0 4px #3b82f6)",
+            }}
+          />
+        ))}
+      </div>
 
-      {/* --- UPDATED: Styled Progress Bar --- */}
+      {/* Play / Pause */}
+      <div className="flex justify-center">
+        <button
+          onClick={togglePlayPause}
+          className="w-16 h-16 bg-blue-800 text-white rounded-full flex items-center justify-center shadow-xl hover:bg-blue-400 hover:scale-110 transition"
+          aria-label={isPlaying ? "Pause" : "Play"}
+        >
+          {isPlaying ? <Pause size={26} /> : <Play size={26} className="ml-1" />}
+        </button>
+      </div>
+
+      {/* Progress Bar (gradient background) */}
       <div className="flex items-center gap-3 w-full">
         <span className="text-xs text-gray-400 w-10 text-right">{formatTime(currentTime)}</span>
         <input
           type="range"
           min={0}
-          max={duration || 0}
-          value={currentTime}
+          max={safeDuration}
+          value={Math.min(currentTime, safeDuration)}
           onChange={handleSeek}
-          className="progress-bar"
-          style={{ '--progress-percent': `${progressPercent}%` } as React.CSSProperties}
+          className="flex-1 accent-blue-500 cursor-pointer"
+          style={{
+            background: `linear-gradient(to right, #06214cff ${progressPercent}%, #02204fff ${progressPercent}%)`,
+          }}
         />
-        <span className="text-xs text-gray-400 w-10">{formatTime(duration)}</span>
+        <span className="text-xs text-gray-400 w-10">{formatTime(safeDuration)}</span>
       </div>
 
+      {/* Speed Control */}
       <div className="flex items-center gap-3 w-full">
-        <FastForward className="w-4 h-4 text-gray-500" />
+        <FastForward className="w-4 h-4 text-gray-400" />
         <input
           type="range"
           min={0.5}
@@ -197,13 +267,39 @@ export function AudioOverview({
           step={0.25}
           value={playbackRate}
           onChange={handleSpeedChange}
-          className="progress-bar"
-          style={{ '--progress-percent': `${speedProgressPercent}%` } as React.CSSProperties}
+          className="flex-1 accent-blue-500 cursor-pointer"
+          style={{
+            background: `linear-gradient(to right, #032152ff ${speedPercent}%, #062659ff ${speedPercent}%)`,
+          }}
         />
         <span className="text-sm font-mono text-gray-300 w-12 text-center">
           {playbackRate.toFixed(2)}x
         </span>
       </div>
+
+      {/* Podcast Segments */}
+      <div>
+        <h3 className="text-white font-semibold mb-2">Podcast Segments</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {segments.map((s, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                const audio = audioRef.current;
+                if (audio) audio.currentTime = s;
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 text-gray-200 hover:bg-blue-600 hover:text-white transition"
+            >
+              <Clock size={14} /> {formatTime(s)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <p className="text-xs text-gray-500 text-center mt-2">
+        Sit Back and Enjoy the Conversation
+      </p>
     </div>
   );
 }

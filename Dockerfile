@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # System tools + ffmpeg + Node.js 20.x + tini (clean signal handling)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl gnupg git xz-utils procps tini ffmpeg \
+      ca-certificates curl gnupg git xz-utils procps tini ffmpeg libasound2 \
  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
  && apt-get install -y --no-install-recommends nodejs \
  && rm -rf /var/lib/apt/lists/* \
