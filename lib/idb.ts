@@ -1,3 +1,5 @@
+"use client";
+
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 // This now defines the structure for a SINGLE file record.

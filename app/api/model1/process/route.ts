@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function getPythonCmd() {
-  return process.env.PYTHON_PATH || "python";
+  // Prefer Docker-provided exact path; else portable fallback.
+  return process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
 }
 
 async function saveToTemp(file: File, filenameFallback = "document.pdf") {
@@ -26,7 +27,8 @@ function run(cmd: string, args: string[]) {
   return new Promise<{ code: number; stdout: string; stderr: string }>((resolve) => {
     const child = spawn(cmd, args, {
       cwd: process.cwd(),
-      shell: process.platform === "win32", // allow 'py' on Windows
+      shell: process.platform === "win32", // only on Windows
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" }, // ensure UTF-8 + pass judges' envs
     });
     let stdout = "";
     let stderr = "";
@@ -47,31 +49,24 @@ export async function POST(req: NextRequest) {
     }
 
     const { tmpDir, tmpPath, safeName } = await saveToTemp(file, name);
-
     const publicOut = path.join(process.cwd(), "public", "model1");
     await fs.mkdir(publicOut, { recursive: true });
 
     const python = getPythonCmd();
     const scriptPath = path.join(process.cwd(), "python", "model_1", "process_pdf.py");
 
-    // 1) sanity check python is callable
     const probe = await run(python, ["--version"]);
     if (probe.code !== 0) {
       await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
       return NextResponse.json(
-        {
-          error: "python_not_found",
-          stderr: probe.stderr || probe.stdout || `Unable to execute ${python}`,
-        },
+        { error: "python_not_found", stderr: probe.stderr || probe.stdout || `Unable to execute ${python}` },
         { status: 500 }
       );
     }
 
-    // 2) run the script
     const args = [scriptPath, "--input", tmpPath, "--output", publicOut];
     const result = await run(python, args);
 
-    // cleanup temp
     await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
 
     if (result.code !== 0) {
@@ -81,7 +76,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3) find the saved JSON path from stdout (SAVED_JSON::<path>)
     const line = result.stdout.split(/\r?\n/).find((l) => l.startsWith("SAVED_JSON::"));
     if (!line) {
       const stem = path.parse(safeName).name;

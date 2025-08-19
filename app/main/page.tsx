@@ -11,6 +11,7 @@ import { InsightPanel } from "@/components/InsightPanel"
 import { Lightbulb } from "lucide-react"
 
 type NavigationTarget = { page: number; text: string }
+
 const bulbGlowAnimation = `
   @keyframes bulb-glow {
     0%, 100% {
@@ -33,7 +34,9 @@ const bulbColorAnimation = `
     }
   }
 `;
+
 export default function MainPage() {
+  const [adobeClientId, setAdobeClientId] = React.useState<string>("")
 
   const [isModalOpen, setIsModalOpen] = React.useState(true)
   const [sources, setSources] = React.useState<FileRecord[]>([])
@@ -42,12 +45,20 @@ export default function MainPage() {
   const [navigationQueue, setNavigationQueue] = React.useState<NavigationTarget | null>(null)
   const [isViewerReady, setIsViewerReady] = React.useState(false)
   const [currentSelection, setCurrentSelection] = React.useState<string>("")
-  // NEW: STEP 1 - Add state to control the shimmer effect
   const [isReportsLoading, setIsReportsLoading] = React.useState(false)
-  // Insight panel state
   const [isInsightPanelOpen, setIsInsightPanelOpen] = React.useState(false)
   const [triggerFetch, setTriggerFetch] = React.useState(false)
   const [isInsightBulbGlowing, setIsInsightBulbGlowing] = React.useState(false)
+
+  // Fetch Adobe key from server route in the same segment
+  React.useEffect(() => {
+    let alive = true
+    fetch("/main/env")
+      .then(r => r.json())
+      .then(d => { if (alive) setAdobeClientId(d?.adobeClientId || "") })
+      .catch(() => { if (alive) setAdobeClientId("") })
+    return () => { alive = false }
+  }, [])
 
   const refreshSources = React.useCallback(async () => {
     const records = await getAllFileRecords()
@@ -59,13 +70,11 @@ export default function MainPage() {
   }, [refreshSources])
 
   React.useEffect(() => {
-    // If the user has selected text, turn the shimmer on.
     if (currentSelection.trim()) {
       setIsReportsLoading(true)
       setIsInsightBulbGlowing(true)
     }
-  }, [currentSelection]) // This runs every time the selection changes.
-
+  }, [currentSelection])
 
   const handleRemoveSource = async (id: number) => {
     await deleteFileRecord(id)
@@ -113,13 +122,14 @@ export default function MainPage() {
               onOpenAdd={() => setIsModalOpen(true)}
               navigationTarget={isViewerReady ? navigationQueue : null}
               onViewerReady={setIsViewerReady}
-              onSelectionChange={setCurrentSelection} // ✅ pass selection up
+              onSelectionChange={setCurrentSelection}
+              adobeClientId={adobeClientId}  // ← pass runtime key
             />
           </div>
 
           <StudioPanel
             selectedFile={selectedFile}
-            currentSelection={currentSelection}  // ✅ pass selected text
+            currentSelection={currentSelection}
             onNavigateRequest={setNavigationQueue}
             isReportsLoading={isReportsLoading}
             onReportsLoadingChange={setIsReportsLoading}
@@ -172,13 +182,14 @@ export default function MainPage() {
                 navigationTarget={isViewerReady ? navigationQueue : null}
                 onViewerReady={setIsViewerReady}
                 onSelectionChange={setCurrentSelection}
+                adobeClientId={adobeClientId}  // ← pass runtime key
               />
             </div>
 
             <div className={`absolute inset-0 ${activeTab === "studio" ? "block" : "hidden"}`}>
               <StudioPanel
                 selectedFile={selectedFile}
-                currentSelection={currentSelection}  // ✅ pass selected text
+                currentSelection={currentSelection}
                 onNavigateRequest={setNavigationQueue}
                 isReportsLoading={isReportsLoading}
                 onReportsLoadingChange={setIsReportsLoading}
@@ -190,23 +201,16 @@ export default function MainPage() {
 
       {/* Floating Insight Button */}
       <div className="fixed bottom-6 right-6 z-40 h-14 w-14">
-
-        {/* The Glow Element (remains the same) */}
         {isInsightBulbGlowing && (
           <div className="absolute inset-0 rounded-full animate-[bulb-glow_2s_ease-in-out_infinite]" />
         )}
 
-        {/* Your Button with conditional background animation */}
         <Button
-          className={`
-      relative h-full w-full rounded-full shadow-lg
-      
-      {/* ✅ THIS IS THE KEY CHANGE */}
-      ${isInsightBulbGlowing
-              ? 'animate-[color-pulse_2s_ease-in-out_infinite]' // When glowing, run the color animation
-              : 'bg-neutral-200 text-black hover:bg-neutral-300' // Otherwise, use static colors
-            }
-    `}
+          className={`relative h-full w-full rounded-full shadow-lg ${
+            isInsightBulbGlowing
+              ? "animate-[color-pulse_2s_ease-in-out_infinite]"
+              : "bg-neutral-200 text-black hover:bg-neutral-300"
+          }`}
           onClick={() => {
             if (!currentSelection.trim()) {
               alert("Please select text to generate insights!")
@@ -223,7 +227,6 @@ export default function MainPage() {
         </Button>
       </div>
 
-      {/* Insight Panel */}
       <InsightPanel
         isOpen={isInsightPanelOpen}
         onClose={() => setIsInsightPanelOpen(false)}

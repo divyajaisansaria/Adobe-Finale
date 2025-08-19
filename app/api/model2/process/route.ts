@@ -1,4 +1,3 @@
-// app/api/model2/process/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
@@ -16,7 +15,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function getPythonCmd() {
-  return process.env.PYTHON_PATH || "python";
+  return process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
 }
 
 function sanitize(name: string) {
@@ -33,7 +32,6 @@ async function mktemp(prefix: string) {
 }
 
 async function clearOutputsDir(dir: string) {
-  // Remove everything, then recreate
   await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
   await fs.mkdir(dir, { recursive: true });
 }
@@ -42,13 +40,11 @@ export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
 
-    // selected text from the viewer
     const selectedText = (form.get("selected_text") as string | null) || "";
     if (!selectedText.trim()) {
       return NextResponse.json({ error: "missing selected_text" }, { status: 400 });
     }
 
-    // collect all uploaded PDFs (multiple 'files' fields)
     const pdfFiles: File[] = [];
     for (const [k, v] of form.entries()) {
       if (k === "files" && v instanceof File) pdfFiles.push(v);
@@ -57,17 +53,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "no pdf files provided" }, { status: 400 });
     }
 
-    // 0) Public output folder
     const publicOut = path.join(process.cwd(), "public", "model2", "outputs");
     await fs.mkdir(publicOut, { recursive: true });
 
-    // 1) Cancel any existing run *first*
     await killCurrentProcess();
-
-    // 2) Immediately clear output dir so UI never shows stale files
     await clearOutputsDir(publicOut);
 
-    // 3) Create temp INPUT structure: <tmp>/<...>/input.json + PDFs/
     const tmpRoot = await mktemp("model2");
     const inputDir = path.join(tmpRoot, "input");
     const pdfsDir = path.join(inputDir, "PDFs");
@@ -86,17 +77,13 @@ export async function POST(req: NextRequest) {
       query: { selected_text: selectedText },
       filters: {},
     };
-    await writeFileSafe(
-      path.join(inputDir, "input.json"),
-      Buffer.from(JSON.stringify(inputJson, null, 2), "utf8")
-    );
+    await writeFileSafe(path.join(inputDir, "input.json"), Buffer.from(JSON.stringify(inputJson, null, 2), "utf8"));
 
-    // 4) Paths for python + models
     const python = getPythonCmd();
     const scriptPath = path.join(process.cwd(), "python", "model_2", "process_pdf.py");
     const modelDir = path.join(process.cwd(), "python", "model_2", "models");
 
-    // Sanity probe (optional but helpful); quick and non-blocking
+    // quick probe
     const probe = await new Promise<{ code: number; out: string }>((resolve) => {
       const p = spawn(python, ["--version"], {
         cwd: process.cwd(),
@@ -112,7 +99,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "python_not_found", stderr: probe.out }, { status: 500 });
     }
 
-    // 5) Start run (do NOT await; fire-and-forget)
     const runId = crypto.randomUUID();
     setRunning(runId);
 
@@ -120,22 +106,15 @@ export async function POST(req: NextRequest) {
     const child = spawn(python, args, {
       cwd: process.cwd(),
       shell: process.platform === "win32",
-      env: {
-        ...process.env,
-        PYTHONNOUSERSITE: "1",
-        PYTHONIOENCODING: "utf-8", // avoid cp1252 Unicode issues on Windows
-      },
-      // stdio default pipes are okay; we attach logs below
+      env: { ...process.env, PYTHONNOUSERSITE: "1", PYTHONIOENCODING: "utf-8" },
     });
 
     setCurrentChild(child);
 
-    // Optional logging (async; doesn't block response)
     child.stdout.on("data", (d) => console.log("[model2 stdout]", d.toString().trim()));
     child.stderr.on("data", (d) => console.error("[model2 stderr]", d.toString().trim()));
     child.on("error", (err) => console.error("[model2 spawn error]", err));
 
-    // When the process finishes, mark stopped and clean temp (async, non-blocking)
     child.on("close", async (code) => {
       try {
         setStopped(code ?? 0);
@@ -143,19 +122,13 @@ export async function POST(req: NextRequest) {
       } catch {}
     });
 
-    // Allow the child to outlive the HTTP request if needed
     try {
       child.unref?.();
     } catch {}
 
-    // Frontend will poll /api/reports; return immediately
-    const outputDirUrl = `/model2/outputs/`;
-    return NextResponse.json({ ok: true, runId, outputDirUrl }, { status: 202 });
+    return NextResponse.json({ ok: true, runId, outputDirUrl: `/model2/outputs/` }, { status: 202 });
   } catch (err: any) {
-    // If anything throws, ensure we mark stopped (best-effort)
-    try {
-      setStopped(null);
-    } catch {}
+    try { setStopped(null); } catch {}
     return NextResponse.json({ error: err?.message || "unknown_error" }, { status: 500 });
   }
 }
