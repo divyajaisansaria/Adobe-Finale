@@ -45,68 +45,58 @@ export function AudioOverview({
   }, [audioUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Native audio events
-  // Reset on URL change (AND CLEAN UP WEB AUDIO)
-useEffect(() => {
-  const audio = audioRef.current;
-  if (!audio) return;
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
 
-  // 1. Reset player state
-  try {
-    audio.pause();
-  } catch {}
-  setIsPlaying(false);
-  setCurrentTime(0);
-  setDuration(0);
-  audio.playbackRate = playbackRate; // preserve speed
+    const updateCurrentTime = () => setCurrentTime(audio.currentTime);
+    const setAudioDuration = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleError = () => setIsPlaying(false);
 
-  // 2. Tear down the old Web Audio graph
-  if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-  try { sourceRef.current?.disconnect(); } catch {}
-  try { analyserRef.current?.disconnect(); } catch {}
-  const ctx = audioContextRef.current;
-  if (ctx && ctx.state !== "closed") {
-    ctx.close().catch(() => {});
-  }
+    audio.addEventListener("timeupdate", updateCurrentTime);
+    audio.addEventListener("loadedmetadata", setAudioDuration);
+    audio.addEventListener("durationchange", setAudioDuration);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+    audio.addEventListener("ended", handlePause);
+    audio.addEventListener("error", handleError);
 
-  // 3. Nullify refs to allow re-initialization
-  audioContextRef.current = null;
-  analyserRef.current = null;
-  sourceRef.current = null;
-  animationFrameRef.current = undefined;
-  setFrequencyData(new Uint8Array(0)); // Clear visualizer
-
-  // 4. Load new audio metadata
-  audio.load();
-
-}, [audioUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      audio.removeEventListener("timeupdate", updateCurrentTime);
+      audio.removeEventListener("loadedmetadata", setAudioDuration);
+      audio.removeEventListener("durationchange", setAudioDuration);
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+      audio.removeEventListener("ended", handlePause);
+      audio.removeEventListener("error", handleError);
+    };
+  }, [audioUrl]);
 
   // Setup Web Audio (do NOT connect analyser to destination → avoids echo)
- // Setup Web Audio (Connect analyser to destination to hear audio)
-const setupAudioContext = () => {
-  if (audioRef.current && !audioContextRef.current) {
-    const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as {
-      new (): AudioContext;
-    };
-    const context = new Ctx();
-    const analyser = context.createAnalyser();
-    analyser.fftSize = 1024;
-    analyser.smoothingTimeConstant = 0.8;
+  const setupAudioContext = () => {
+    if (audioRef.current && !audioContextRef.current) {
+      const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as {
+        new (): AudioContext;
+      };
+      const context = new Ctx();
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 1024; // keep your UI choice
+      analyser.smoothingTimeConstant = 0.8;
 
-    const source = context.createMediaElementSource(audioRef.current);
-    
-    // The audio path is:
-    // 1. Source (from <audio> tag) -> 
-    // 2. Analyser (for visualizer) ->
-    // 3. Destination (speakers)
-    source.connect(analyser);
-    analyser.connect(context.destination); // This line makes the sound audible
+      const source = context.createMediaElementSource(audioRef.current);
+      source.connect(analyser);
+      analyser.connect(context.destination); 
+      // ❌ Do NOT: analyser.connect(context.destination)
+      // The <audio> element already outputs sound; routing analyser to destination causes double audio.
 
-    audioContextRef.current = context;
-    analyserRef.current = analyser;
-    sourceRef.current = source;
-    setFrequencyData(new Uint8Array(analyser.frequencyBinCount));
-  }
-};
+      audioContextRef.current = context;
+      analyserRef.current = analyser;
+      sourceRef.current = source;
+      setFrequencyData(new Uint8Array(analyser.frequencyBinCount));
+    }
+  };
 
   // Visualizer loop
   const runAnimation = () => {
