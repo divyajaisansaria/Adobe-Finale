@@ -1,4 +1,3 @@
-# --- Node / Next.js build artifacts (rebuild inside container) ---
 node_modules
 .next
 out
@@ -8,8 +7,6 @@ build
 .vercel
 .npm
 .pnpm-store
-
-# --- Logs & caches ---
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -17,14 +14,10 @@ yarn-error.log*
 .pnpm-debug.log*
 .cache
 coverage
-
-# --- IDE / OS junk ---
 .vscode
 .idea
 .DS_Store
 Thumbs.db
-
-# --- Env & secrets (we pass env via `docker run -e ...`) ---
 .env
 .env.*
 !.env.example
@@ -35,26 +28,17 @@ credentials/
 *.p12
 *.key
 *.crt
-
-# --- Python caches ---
 **/__pycache__/
 **/*.py[cod]
-
-# --- Local outputs (generated at runtime) ---
 public/audio/*
 !public/audio/.gitkeep
 public/model1/*.json
 public/model2/outputs/**
-# keep any placeholders you might use:
 !public/model1/.gitkeep
 !public/model2/outputs/.gitkeep
-
-# --- Large HF model weights (download inside image via download_model.py) ---
 python/model_2/models/*
 !python/model_2/models/download_model.py
 !python/model_2/models/__init__.py
-
-# --- Misc ---
 *.swp
 *.swo
 .venv

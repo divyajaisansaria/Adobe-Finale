@@ -15,7 +15,6 @@
     "jsx": "preserve",
     "plugins": [{ "name": "next" }],
 
-    // 👇 add these lines
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]

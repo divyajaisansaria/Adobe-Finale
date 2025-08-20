@@ -1,4 +1,3 @@
-# python/summarygenerator.py  — Vertex AI only
 import sys
 import os
 import json

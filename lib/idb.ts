@@ -2,7 +2,7 @@
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
-// This now defines the structure for a SINGLE file record.
+
 export interface FileRecord {
   id: number;
   persona?: string; // Changed to optional

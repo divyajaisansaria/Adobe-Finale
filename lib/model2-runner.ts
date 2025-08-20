@@ -1,7 +1,5 @@
 import "server-only";
-// lib/model2-runner.ts
 
-// lib/model2-runner.ts
 import type { ChildProcess } from "child_process"
 import { spawn } from "child_process"
 
@@ -75,7 +73,7 @@ export async function killCurrentProcess(): Promise<void> {
     try {
       currentChild.kill("SIGTERM")
     } catch {}
-    // fallback hard kill after a moment
+
     setTimeout(() => {
       try {
         if (currentChild) currentChild.kill("SIGKILL")

@@ -50,7 +50,6 @@ def download_all_models():
         print(f"\nProcessing repository: {repo_id}")
         local_dir_path = os.path.join(MODELS_DIR, info["local_dir"])
 
-        # Try to get sizes (nice-to-have; okay if it fails)
         try:
             repo_files = api.model_info(repo_id=repo_id).siblings
             file_sizes = {f.rfilename: f.size for f in repo_files}

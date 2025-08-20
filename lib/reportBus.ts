@@ -1,7 +1,4 @@
-// lib/reportBus.ts
 "use client"
-
-// Tiny client-side event bus to signal a new Model2 run has begun.
 const target = new EventTarget()
 const NEW_RUN_EVENT = "model2:new-run"
 

@@ -1,4 +1,3 @@
-# python/model_1/process_pdf.py
 import os
 import json
 import re
@@ -57,7 +56,6 @@ def extract_lines_and_features(pdf_path):
 
         for page in pdf.pages:
             page_words = page.extract_words(extra_attrs=["size", "fontname", "bottom"])
-            # sort by text order
             page_words = sorted(page_words, key=lambda w: (w["top"], w["x0"]))
             if not page_words:
                 continue

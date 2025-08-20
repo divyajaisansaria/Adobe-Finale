@@ -1,13 +1,12 @@
-// lib/podcast-client.ts
 "use client";
 
 export type StartPodcastParams = {
   text: string;
-  hostVoice?: string;   // e.g. "en-IN-NeerjaNeural"
-  guestVoice?: string;  // e.g. "en-IN-PrabhatNeural"
+  hostVoice?: string;   
+  guestVoice?: string;  
   title?: string;
   topic?: string;
-  maxTurns?: number;    // default in .py is 6
+  maxTurns?: number;    
 };
 
 export async function startPodcast(params: StartPodcastParams) {
@@ -21,7 +20,7 @@ export async function startPodcast(params: StartPodcastParams) {
     const detail = data?.detail || data?.error || "Podcast generation failed";
     throw new Error(detail);
   }
-  // data.audioUrl is like "/audio/<file>.mp3"
+
   return data.audioUrl as string;
 }
 

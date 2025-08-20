@@ -1,8 +1,3 @@
-# process_pdf.py — CPU-only, offline PDF recommender (selected-text query mode, normalized scoring).
-# Writes a per-TITLE "<PDFName>__<Title>_<ordinal>.json" after each selected section of each PDF.
-# (e.g., _first for the top section of that PDF, _second for the next, etc.)
-# No persona/job/timestamp in outputs. Minimal console output (only errors + final summary).
-
 import os
 import re
 import json

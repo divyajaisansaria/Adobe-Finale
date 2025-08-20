@@ -1,23 +1,14 @@
 --index-url https://pypi.org/simple
 --extra-index-url https://download.pytorch.org/whl/cpu
 
-# Core numerics / HTTP / PDF
 numpy==2.0.2
 requests>=2.25.0
 pdfplumber==0.11.4
-
-# ML stack (CPU)
 torch==2.3.1
 transformers==4.46.3
 tokenizers==0.20.3
 huggingface-hub==0.24.6
 sentence-transformers==2.6.1
-
-# Vertex AI (Gemini via service account)
 google-cloud-aiplatform>=1.66.0
-
-# TTS (podcast)
 azure-cognitiveservices-speech>=1.35,<2.0
-
-# Audio helper (uses ffmpeg in the image)
 pydub>=0.25.0

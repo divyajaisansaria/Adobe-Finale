@@ -1,13 +1,3 @@
-# python/pdfchat.py
-# Vertex-only (service account) PDF Q&A aligned with judges' env.
-# Expected env:
-#   LLM_PROVIDER=gemini
-#   GEMINI_MODEL=gemini-2.5-flash
-#   GOOGLE_APPLICATION_CREDENTIALS=/credentials/adbe-gcp.json
-# Optional:
-#   GOOGLE_CLOUD_PROJECT=<project-id>  (else inferred from SA JSON)
-#   GOOGLE_CLOUD_REGION=us-central1
-
 import sys
 import os
 import json
