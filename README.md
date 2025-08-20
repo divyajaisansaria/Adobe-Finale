@@ -26,6 +26,8 @@ The ADOBE API KEY used by us is:
 ```bash
 ADOBE_EMBED_API_KEY=c00e026f37cc451aae1ee54adde2fca8
 ```
+First, create a folder named `credentials` somewhere on your computer. Place your `adbe-gcp.json` - the google credentials file inside this folder.
+Next, run the command below. You must replace `full/path/to/your/credentials` with the actual, full path to the credentials folder you just created.
 
 #### For Windows (using Command Prompt)
 
