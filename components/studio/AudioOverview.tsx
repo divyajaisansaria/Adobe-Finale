@@ -17,6 +17,7 @@ export function AudioOverview({
   audioUrl?: string | null;
   loading: boolean;
 }) {
+  console.log("AudioOverview received URL:", audioUrl);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -74,7 +75,7 @@ export function AudioOverview({
     };
   }, [audioUrl]);
 
-  // Setup Web Audio (do NOT connect analyser to destination → avoids echo)
+  // Setup Web Audio
   const setupAudioContext = () => {
     if (audioRef.current && !audioContextRef.current) {
       const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as {
@@ -87,9 +88,9 @@ export function AudioOverview({
 
       const source = context.createMediaElementSource(audioRef.current);
       source.connect(analyser);
-      analyser.connect(context.destination); 
-      // ❌ Do NOT: analyser.connect(context.destination)
-      // The <audio> element already outputs sound; routing analyser to destination causes double audio.
+      
+      // ✅ FIX 1: Connect analyser to destination to make sound audible.
+      analyser.connect(context.destination);
 
       audioContextRef.current = context;
       analyserRef.current = analyser;
@@ -125,7 +126,7 @@ export function AudioOverview({
     };
   }, [isPlaying]);
 
-  // Cleanup on unmount
+  // Cleanup on URL change or unmount
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
@@ -139,7 +140,7 @@ export function AudioOverview({
       analyserRef.current = null;
       sourceRef.current = null;
     };
-  }, []);
+  }, [audioUrl]); // ✅ FIX 2: Dependency changed from [] to [audioUrl].
 
   // Controls
   const togglePlayPause = () => {

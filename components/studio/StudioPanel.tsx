@@ -92,6 +92,7 @@ export function StudioPanel({
   // Reports spinner state (child toggles via callback)
   // const [isReportsLoading, setIsReportsLoading] = useState(false)
   const handleFeatureClick = async (featureKey: string) => {
+    console.log("Feature button clicked with key:", featureKey);
     setActiveFeature(featureKey);
 
     if (featureKey === "Summary") {
@@ -127,6 +128,7 @@ export function StudioPanel({
     }
   };
   const renderScrollableContent = () => {
+    console.log("Component is rendering with active feature:", activeFeature);
     switch (activeFeature) {
       case "Reports":
         return <ReportsPanel onLoadingChange={onReportsLoadingChange} />

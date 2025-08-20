@@ -25,7 +25,7 @@ export function FeatureTile({
   isActive?: boolean
   isLoading?: boolean
 }) {
-  const needsLoadingSpinner = (label === "Summary" || label === "Relevant Section" || label==="Podcast") && isLoading
+  const needsLoadingSpinner = (label === "Summary" || label === "Relevant Section" || label === "Podcast") && isLoading
   return (
     <>
       {/* STEP 1: Inject the keyframes directly into the page's styles.
@@ -33,7 +33,10 @@ export function FeatureTile({
       <style>{shimmerAnimation}</style>
 
       <div
-        onClick={onClick}
+        onClick={() => {
+          console.log("Click registered INSIDE FeatureTile!");
+          onClick();
+        }}
         // overflow-hidden is crucial to contain the shimmer effect.
         className={`relative rounded-xl p-4 flex flex-col gap-2.5 cursor-pointer transition-colors text-white/90 overflow-hidden ${bgColor}`}
       >
@@ -48,7 +51,7 @@ export function FeatureTile({
         )}
 
         {/* The content is set to z-10 to ensure it appears on top of the shimmer. */}
-        <div className="relative z-10">
+        <div className="relative">
           {React.cloneElement(icon as React.ReactElement, {
             className: `h-5 w-5 text-white/80`,
           })}
