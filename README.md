@@ -1,7 +1,7 @@
 # 🚀 Connecting the Dots - Adobe India Hackathon 2025
 
 ## Theme: From Brains to Experience - Make It Real
-## Live Demo 🌐
+### Live Demo 🌐
 🔗 https://adobe-finale-production.up.railway.app
 
 ### 1. How to Run Our Project
