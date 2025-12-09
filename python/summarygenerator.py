@@ -7,47 +7,25 @@ from io import BytesIO
 import pdfplumber
 
 # ----- Env -----
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini").lower()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-GOOGLE_APPLICATION_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-GOOGLE_CLOUD_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
-GOOGLE_CLOUD_REGION = os.environ.get("GOOGLE_CLOUD_REGION", "us-central1")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-if not GOOGLE_APPLICATION_CREDENTIALS:
-    print("Error: GOOGLE_APPLICATION_CREDENTIALS not set", file=sys.stderr)
+if LLM_PROVIDER != "gemini":
+    print("Error: LLM_PROVIDER must be 'gemini' for this script", file=sys.stderr)
     sys.exit(1)
 
-def _read_project_from_sa(json_path: str) -> str:
-    try:
-        with open(json_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data.get("project_id") or data.get("projectId") or ""
-    except Exception:
-        return ""
+if not GEMINI_API_KEY:
+    print("Error: GEMINI_API_KEY not set", file=sys.stderr)
+    sys.exit(1)
 
-# ----- Vertex init (lazy) -----
-_vertex_model = None
+# ----- Gemini init -----
+import google.generativeai as genai
 
-def _init_vertex_if_needed():
-    global _vertex_model
-    if _vertex_model is not None:
-        return
-    try:
-        from vertexai import init as vertex_init
-        from vertexai.generative_models import GenerativeModel
-
-        project = GOOGLE_CLOUD_PROJECT or _read_project_from_sa(GOOGLE_APPLICATION_CREDENTIALS)
-        if project:
-            vertex_init(project=project, location=GOOGLE_CLOUD_REGION)
-        else:
-            vertex_init(location=GOOGLE_CLOUD_REGION)
-
-        _vertex_model = GenerativeModel(GEMINI_MODEL)
-    except Exception as e:
-        print(f"Error: failed to initialize Vertex AI: {e}", file=sys.stderr)
-        sys.exit(1)
+genai.configure(api_key=GEMINI_API_KEY)
+_model = genai.GenerativeModel(GEMINI_MODEL)
 
 def generate_summary_chunk(text: str) -> str:
-    _init_vertex_if_needed()
     try:
         prompt = f"""
 You are an expert AI assistant specialized in summarizing documents concisely.
@@ -64,12 +42,16 @@ Instructions:
 7. Output plain text only — do NOT return JSON or markup.
 """.strip()
 
-        resp = _vertex_model.generate_content(prompt)
+        resp = _model.generate_content(
+            prompt,
+            generation_config={"temperature": 0.7}
+        )
+
         if hasattr(resp, "text") and resp.text:
             return resp.text
         return str(getattr(resp, "candidates", "") or resp)
     except Exception as e:
-        raise RuntimeError(f"Vertex generation failed: {e}")
+        raise RuntimeError(f"Gemini generation failed: {e}")
 
 # ----- Helpers -----
 def download_pdf(pdf_url: str) -> str:
