@@ -9,6 +9,7 @@ transformers==4.46.3
 tokenizers==0.20.3
 huggingface-hub==0.24.6
 sentence-transformers==2.6.1
-google-cloud-aiplatform>=1.66.0
-azure-cognitiveservices-speech>=1.35,<2.0
+
+google-generativeai>=0.7.0   # for Gemini API key
+
 pydub>=0.25.0

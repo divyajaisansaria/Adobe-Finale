@@ -4,51 +4,27 @@ import json
 import re
 from typing import List, Dict, Any
 
+# ------------- LLM CONFIG -------------
+
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini").lower()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-GOOGLE_APPLICATION_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-GOOGLE_CLOUD_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
-GOOGLE_CLOUD_REGION = os.environ.get("GOOGLE_CLOUD_REGION", "us-central1")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 if LLM_PROVIDER != "gemini":
     print("Error: LLM_PROVIDER must be 'gemini' for insightgenerator.py", file=sys.stderr)
     sys.exit(1)
 
-if not GOOGLE_APPLICATION_CREDENTIALS:
-    print("Error: GOOGLE_APPLICATION_CREDENTIALS not set", file=sys.stderr)
+if not GEMINI_API_KEY:
+    print("Error: GEMINI_API_KEY not set", file=sys.stderr)
     sys.exit(1)
 
-# ---- Vertex init (lazy) ----
-_vertex_model = None
+import google.generativeai as genai
 
-def _read_project_from_sa(json_path: str) -> str:
-    try:
-        with open(json_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data.get("project_id") or data.get("projectId") or ""
-    except Exception:
-        return ""
+genai.configure(api_key=GEMINI_API_KEY)
+_model = genai.GenerativeModel(GEMINI_MODEL)
 
-def _init_vertex_if_needed():
-    global _vertex_model
-    if _vertex_model is not None:
-        return
-    try:
-        from vertexai import init as vertex_init
-        from vertexai.generative_models import GenerativeModel
-    except Exception as e:
-        print(f"Error: Vertex AI SDK not installed: {e}", file=sys.stderr)
-        sys.exit(1)
+# ------------- JSON HELPERS -------------
 
-    project = GOOGLE_CLOUD_PROJECT or _read_project_from_sa(GOOGLE_APPLICATION_CREDENTIALS)
-    if project:
-        vertex_init(project=project, location=GOOGLE_CLOUD_REGION)
-    else:
-        vertex_init(location=GOOGLE_CLOUD_REGION)
-
-    _vertex_model = GenerativeModel(GEMINI_MODEL)
-
-# ---- JSON helpers ----
 def _strip_code_fences(s: str) -> str:
     s = s.strip()
     s = re.sub(r"^```(?:json)?\s*", "", s, flags=re.IGNORECASE | re.MULTILINE)
@@ -83,10 +59,9 @@ def _parse_json_array(text: str) -> List[Dict[str, Any]]:
 
     return []
 
-# ---- Core generation ----
-def generate_insights(text: str) -> List[Dict[str, Any]]:
-    _init_vertex_if_needed()
+# ------------- CORE GENERATION -------------
 
+def generate_insights(text: str) -> List[Dict[str, Any]]:
     prompt = f"""
 You are a highly intelligent AI assistant tasked with analyzing the text below. Generate concise and insightful facts in three distinct categories:
 
@@ -102,20 +77,14 @@ Text:
 """.strip()
 
     try:
-        resp = _vertex_model.generate_content(prompt)
+        resp = _model.generate_content(
+            prompt,
+            generation_config={"temperature": 0.7}
+        )
 
         # Prefer resp.text if present
-        out = None
-        if hasattr(resp, "text") and resp.text:
-            out = resp.text
-        else:
-            cands = getattr(resp, "candidates", None)
-            if cands:
-                content = getattr(cands[0], "content", None)
-                parts = getattr(content, "parts", None) if content else None
-                if parts and len(parts) > 0 and hasattr(parts[0], "text"):
-                    out = parts[0].text
-        if out is None:
+        out = getattr(resp, "text", None)
+        if not out:
             out = str(resp)
 
         arr = _parse_json_array(out)
@@ -127,7 +96,8 @@ Text:
         print(f"Error generating insights: {e}", file=sys.stderr)
         return []
 
-# ---- CLI entrypoint ----
+# ------------- CLI ENTRYPOINT -------------
+
 if __name__ == "__main__":
     try:
         try:
