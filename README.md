@@ -130,4 +130,9 @@ We have built a web-based PDF reading experience that helps users connect the do
 * [Divya Jaisansaria](https://github.com/divyajaisansaria)
 * [Harshvardhan Gupta](https://github.com/harshvardhansgupta)
 
+### 8. Live Demo 🌐
+🔗 https://adobe-finale-production.up.railway.app
+👉 **[Open the Live App](https://adobe-finale-production.up.railway.app)**
+
+
 
