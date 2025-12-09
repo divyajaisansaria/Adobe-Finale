@@ -1,6 +1,8 @@
 # 🚀 Connecting the Dots - Adobe India Hackathon 2025
 
 ## Theme: From Brains to Experience - Make It Real
+## Live Demo 🌐
+🔗 https://adobe-finale-production.up.railway.app
 
 ### 1. How to Run Our Project
 
@@ -129,10 +131,3 @@ We have built a web-based PDF reading experience that helps users connect the do
 * [Shashank Maurya](https://github.com/5hank6)
 * [Divya Jaisansaria](https://github.com/divyajaisansaria)
 * [Harshvardhan Gupta](https://github.com/harshvardhansgupta)
-
-### 8. Live Demo 🌐
-🔗 https://adobe-finale-production.up.railway.app
-👉 **[Open the Live App](https://adobe-finale-production.up.railway.app)**
-
-
-
